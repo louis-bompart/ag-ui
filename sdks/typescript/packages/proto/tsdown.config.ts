@@ -7,5 +7,6 @@ export default defineConfig((inlineConfig) => ({
   exports: true,
   fixedExtension: false,
   sourcemap: true,
+  unbundle: true,
   clean: !inlineConfig.watch, // Don't clean in watch mode to prevent race conditions
 }));
