@@ -72,17 +72,17 @@
   }
 
   // ../../sdks/typescript/packages/client/dist/agent/subscriber.mjs
-  async function t2(t5, n5, r4, i4) {
-    let a6 = n5, o6 = r4, s5;
-    for (let n6 of t5) try {
-      let t6 = await i4(n6, t(a6), t(o6));
+  async function t2(t5, n4, r4, i4) {
+    let a6 = n4, o6 = r4, s5;
+    for (let n5 of t5) try {
+      let t6 = await i4(n5, t(a6), t(o6));
       if (t6 === void 0) continue;
       if (t6.messages !== void 0 && (a6 = t6.messages), t6.state !== void 0 && (o6 = t6.state), s5 = t6.stopPropagation, s5 === true) break;
     } catch (e2) {
       process.env.VITEST_WORKER_ID !== void 0 || console.error(`Subscriber error:`, e2);
       continue;
     }
-    return { ...JSON.stringify(a6) === JSON.stringify(n5) ? {} : { messages: a6 }, ...JSON.stringify(o6) === JSON.stringify(r4) ? {} : { state: o6 }, ...s5 === void 0 ? {} : { stopPropagation: s5 } };
+    return { ...JSON.stringify(a6) === JSON.stringify(n4) ? {} : { messages: a6 }, ...JSON.stringify(o6) === JSON.stringify(r4) ? {} : { state: o6 }, ...s5 === void 0 ? {} : { stopPropagation: s5 } };
   }
 
   // ../../node_modules/.pnpm/zod@4.3.6/node_modules/zod/v4/core/core.js
@@ -1693,41 +1693,41 @@
     literal("assistant"),
     literal("user")
   ]);
-  var EventType = /* @__PURE__ */ (function(EventType3) {
-    EventType3["TEXT_MESSAGE_START"] = "TEXT_MESSAGE_START";
-    EventType3["TEXT_MESSAGE_CONTENT"] = "TEXT_MESSAGE_CONTENT";
-    EventType3["TEXT_MESSAGE_END"] = "TEXT_MESSAGE_END";
-    EventType3["TEXT_MESSAGE_CHUNK"] = "TEXT_MESSAGE_CHUNK";
-    EventType3["TOOL_CALL_START"] = "TOOL_CALL_START";
-    EventType3["TOOL_CALL_ARGS"] = "TOOL_CALL_ARGS";
-    EventType3["TOOL_CALL_END"] = "TOOL_CALL_END";
-    EventType3["TOOL_CALL_CHUNK"] = "TOOL_CALL_CHUNK";
-    EventType3["TOOL_CALL_RESULT"] = "TOOL_CALL_RESULT";
-    EventType3["THINKING_START"] = "THINKING_START";
-    EventType3["THINKING_END"] = "THINKING_END";
-    EventType3["THINKING_TEXT_MESSAGE_START"] = "THINKING_TEXT_MESSAGE_START";
-    EventType3["THINKING_TEXT_MESSAGE_CONTENT"] = "THINKING_TEXT_MESSAGE_CONTENT";
-    EventType3["THINKING_TEXT_MESSAGE_END"] = "THINKING_TEXT_MESSAGE_END";
-    EventType3["STATE_SNAPSHOT"] = "STATE_SNAPSHOT";
-    EventType3["STATE_DELTA"] = "STATE_DELTA";
-    EventType3["MESSAGES_SNAPSHOT"] = "MESSAGES_SNAPSHOT";
-    EventType3["ACTIVITY_SNAPSHOT"] = "ACTIVITY_SNAPSHOT";
-    EventType3["ACTIVITY_DELTA"] = "ACTIVITY_DELTA";
-    EventType3["RAW"] = "RAW";
-    EventType3["CUSTOM"] = "CUSTOM";
-    EventType3["RUN_STARTED"] = "RUN_STARTED";
-    EventType3["RUN_FINISHED"] = "RUN_FINISHED";
-    EventType3["RUN_ERROR"] = "RUN_ERROR";
-    EventType3["STEP_STARTED"] = "STEP_STARTED";
-    EventType3["STEP_FINISHED"] = "STEP_FINISHED";
-    EventType3["REASONING_START"] = "REASONING_START";
-    EventType3["REASONING_MESSAGE_START"] = "REASONING_MESSAGE_START";
-    EventType3["REASONING_MESSAGE_CONTENT"] = "REASONING_MESSAGE_CONTENT";
-    EventType3["REASONING_MESSAGE_END"] = "REASONING_MESSAGE_END";
-    EventType3["REASONING_MESSAGE_CHUNK"] = "REASONING_MESSAGE_CHUNK";
-    EventType3["REASONING_END"] = "REASONING_END";
-    EventType3["REASONING_ENCRYPTED_VALUE"] = "REASONING_ENCRYPTED_VALUE";
-    return EventType3;
+  var EventType = /* @__PURE__ */ (function(EventType2) {
+    EventType2["TEXT_MESSAGE_START"] = "TEXT_MESSAGE_START";
+    EventType2["TEXT_MESSAGE_CONTENT"] = "TEXT_MESSAGE_CONTENT";
+    EventType2["TEXT_MESSAGE_END"] = "TEXT_MESSAGE_END";
+    EventType2["TEXT_MESSAGE_CHUNK"] = "TEXT_MESSAGE_CHUNK";
+    EventType2["TOOL_CALL_START"] = "TOOL_CALL_START";
+    EventType2["TOOL_CALL_ARGS"] = "TOOL_CALL_ARGS";
+    EventType2["TOOL_CALL_END"] = "TOOL_CALL_END";
+    EventType2["TOOL_CALL_CHUNK"] = "TOOL_CALL_CHUNK";
+    EventType2["TOOL_CALL_RESULT"] = "TOOL_CALL_RESULT";
+    EventType2["THINKING_START"] = "THINKING_START";
+    EventType2["THINKING_END"] = "THINKING_END";
+    EventType2["THINKING_TEXT_MESSAGE_START"] = "THINKING_TEXT_MESSAGE_START";
+    EventType2["THINKING_TEXT_MESSAGE_CONTENT"] = "THINKING_TEXT_MESSAGE_CONTENT";
+    EventType2["THINKING_TEXT_MESSAGE_END"] = "THINKING_TEXT_MESSAGE_END";
+    EventType2["STATE_SNAPSHOT"] = "STATE_SNAPSHOT";
+    EventType2["STATE_DELTA"] = "STATE_DELTA";
+    EventType2["MESSAGES_SNAPSHOT"] = "MESSAGES_SNAPSHOT";
+    EventType2["ACTIVITY_SNAPSHOT"] = "ACTIVITY_SNAPSHOT";
+    EventType2["ACTIVITY_DELTA"] = "ACTIVITY_DELTA";
+    EventType2["RAW"] = "RAW";
+    EventType2["CUSTOM"] = "CUSTOM";
+    EventType2["RUN_STARTED"] = "RUN_STARTED";
+    EventType2["RUN_FINISHED"] = "RUN_FINISHED";
+    EventType2["RUN_ERROR"] = "RUN_ERROR";
+    EventType2["STEP_STARTED"] = "STEP_STARTED";
+    EventType2["STEP_FINISHED"] = "STEP_FINISHED";
+    EventType2["REASONING_START"] = "REASONING_START";
+    EventType2["REASONING_MESSAGE_START"] = "REASONING_MESSAGE_START";
+    EventType2["REASONING_MESSAGE_CONTENT"] = "REASONING_MESSAGE_CONTENT";
+    EventType2["REASONING_MESSAGE_END"] = "REASONING_MESSAGE_END";
+    EventType2["REASONING_MESSAGE_CHUNK"] = "REASONING_MESSAGE_CHUNK";
+    EventType2["REASONING_END"] = "REASONING_END";
+    EventType2["REASONING_ENCRYPTED_VALUE"] = "REASONING_ENCRYPTED_VALUE";
+    return EventType2;
   })({});
   var BaseEventSchema = looseObject({
     type: nativeEnum(EventType),
@@ -2617,9 +2617,9 @@
     return g.next = verb(0), g["throw"] = verb(1), g["return"] = verb(2), typeof Symbol === "function" && (g[Symbol.iterator] = function() {
       return this;
     }), g;
-    function verb(n5) {
+    function verb(n4) {
       return function(v) {
-        return step([n5, v]);
+        return step([n4, v]);
       };
     }
     function step(op) {
@@ -2689,12 +2689,12 @@
     };
     throw new TypeError(s5 ? "Object is not iterable." : "Symbol.iterator is not defined.");
   }
-  function __read(o6, n5) {
+  function __read(o6, n4) {
     var m = typeof Symbol === "function" && o6[Symbol.iterator];
     if (!m) return o6;
     var i4 = m.call(o6), r4, ar = [], e2;
     try {
-      while ((n5 === void 0 || n5-- > 0) && !(r4 = i4.next()).done) ar.push(r4.value);
+      while ((n4 === void 0 || n4-- > 0) && !(r4 = i4.next()).done) ar.push(r4.value);
     } catch (error) {
       e2 = { error };
     } finally {
@@ -2729,19 +2729,19 @@
         return Promise.resolve(v).then(f2, reject);
       };
     }
-    function verb(n5, f2) {
-      if (g[n5]) {
-        i4[n5] = function(v) {
+    function verb(n4, f2) {
+      if (g[n4]) {
+        i4[n4] = function(v) {
           return new Promise(function(a6, b) {
-            q.push([n5, v, a6, b]) > 1 || resume(n5, v);
+            q.push([n4, v, a6, b]) > 1 || resume(n4, v);
           });
         };
-        if (f2) i4[n5] = f2(i4[n5]);
+        if (f2) i4[n4] = f2(i4[n4]);
       }
     }
-    function resume(n5, v) {
+    function resume(n4, v) {
       try {
-        step(g[n5](v));
+        step(g[n4](v));
       } catch (e2) {
         settle(q[0][3], e2);
       }
@@ -2765,10 +2765,10 @@
     return m ? m.call(o6) : (o6 = typeof __values === "function" ? __values(o6) : o6[Symbol.iterator](), i4 = {}, verb("next"), verb("throw"), verb("return"), i4[Symbol.asyncIterator] = function() {
       return this;
     }, i4);
-    function verb(n5) {
-      i4[n5] = o6[n5] && function(v) {
+    function verb(n4) {
+      i4[n4] = o6[n4] && function(v) {
         return new Promise(function(resolve, reject) {
-          v = o6[n5](v), settle(resolve, reject, v.done, v.value);
+          v = o6[n4](v), settle(resolve, reject, v.done, v.value);
         });
       };
     }
@@ -4636,74 +4636,74 @@
       return g = {}, t5.messages !== void 0 || t5.state !== void 0 ? of(t5) : EMPTY;
     };
     return d2.pipe(concatMap(async (i4) => {
-      let a6 = await t2(p, m, h, (e2, t5, n5) => e2.onEvent?.({ event: i4, agent: f2, input: u3, messages: t5, state: n5 }));
+      let a6 = await t2(p, m, h, (e2, t5, n4) => e2.onEvent?.({ event: i4, agent: f2, input: u3, messages: t5, state: n4 }));
       if (_(a6), a6.stopPropagation === true) return v();
       switch (i4.type) {
         case EventType.TEXT_MESSAGE_START: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onTextMessageStartEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onTextMessageStartEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
             let { messageId: e3, role: t5 = `assistant` } = i4;
             if (!m.find((t6) => t6.id === e3)) {
-              let n5 = { id: e3, role: t5, content: `` };
-              m.push(n5), _({ messages: m });
+              let n4 = { id: e3, role: t5, content: `` };
+              m.push(n4), _({ messages: m });
             }
           }
           return v();
         }
         case EventType.TEXT_MESSAGE_CONTENT: {
-          let { messageId: e2, delta: n5 } = i4, r4 = m.find((t5) => t5.id === e2);
+          let { messageId: e2, delta: n4 } = i4, r4 = m.find((t5) => t5.id === e2);
           if (!r4) return console.warn(`TEXT_MESSAGE_CONTENT: No message found with ID '${e2}'`), v();
-          let a7 = await t2(p, m, h, (e3, t5, n6) => e3.onTextMessageContentEvent?.({ event: i4, messages: t5, state: n6, agent: f2, input: u3, textMessageBuffer: typeof r4.content == `string` ? r4.content : `` }));
-          return _(a7), a7.stopPropagation !== true && (r4.content = `${typeof r4.content == `string` ? r4.content : ``}${n5}`, _({ messages: m })), v();
+          let a7 = await t2(p, m, h, (e3, t5, n5) => e3.onTextMessageContentEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3, textMessageBuffer: typeof r4.content == `string` ? r4.content : `` }));
+          return _(a7), a7.stopPropagation !== true && (r4.content = `${typeof r4.content == `string` ? r4.content : ``}${n4}`, _({ messages: m })), v();
         }
         case EventType.TEXT_MESSAGE_END: {
-          let { messageId: e2 } = i4, n5 = m.find((t5) => t5.id === e2);
-          return n5 ? (_(await t2(p, m, h, (e3, t5, r4) => e3.onTextMessageEndEvent?.({ event: i4, messages: t5, state: r4, agent: f2, input: u3, textMessageBuffer: typeof n5.content == `string` ? n5.content : `` }))), await Promise.all(p.map((e3) => {
-            e3.onNewMessage?.({ message: n5, messages: m, state: h, agent: f2, input: u3 });
+          let { messageId: e2 } = i4, n4 = m.find((t5) => t5.id === e2);
+          return n4 ? (_(await t2(p, m, h, (e3, t5, r4) => e3.onTextMessageEndEvent?.({ event: i4, messages: t5, state: r4, agent: f2, input: u3, textMessageBuffer: typeof n4.content == `string` ? n4.content : `` }))), await Promise.all(p.map((e3) => {
+            e3.onNewMessage?.({ message: n4, messages: m, state: h, agent: f2, input: u3 });
           })), v()) : (console.warn(`TEXT_MESSAGE_END: No message found with ID '${e2}'`), v());
         }
         case EventType.TOOL_CALL_START: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onToolCallStartEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onToolCallStartEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
-            let { toolCallId: e3, toolCallName: t5, parentMessageId: n5 } = i4, r4;
-            n5 && m.length > 0 && m[m.length - 1].id === n5 ? r4 = m[m.length - 1] : (r4 = { id: n5 || e3, role: `assistant`, toolCalls: [] }, m.push(r4)), r4.toolCalls ??= [], r4.toolCalls.push({ id: e3, type: `function`, function: { name: t5, arguments: `` } }), _({ messages: m });
+            let { toolCallId: e3, toolCallName: t5, parentMessageId: n4 } = i4, r4;
+            n4 && m.length > 0 && m[m.length - 1].id === n4 ? r4 = m[m.length - 1] : (r4 = { id: n4 || e3, role: `assistant`, toolCalls: [] }, m.push(r4)), r4.toolCalls ??= [], r4.toolCalls.push({ id: e3, type: `function`, function: { name: t5, arguments: `` } }), _({ messages: m });
           }
           return v();
         }
         case EventType.TOOL_CALL_ARGS: {
-          let { toolCallId: e2, delta: n5 } = i4, r4 = m.find((t5) => t5.toolCalls?.some((t6) => t6.id === e2));
+          let { toolCallId: e2, delta: n4 } = i4, r4 = m.find((t5) => t5.toolCalls?.some((t6) => t6.id === e2));
           if (!r4) return console.warn(`TOOL_CALL_ARGS: No message found containing tool call with ID '${e2}'`), v();
           let a7 = r4.toolCalls?.find((t5) => t5.id === e2);
           if (!a7) return console.warn(`TOOL_CALL_ARGS: No tool call found with ID '${e2}'`), v();
-          let o6 = await t2(p, m, h, (e3, t5, n6) => {
+          let o6 = await t2(p, m, h, (e3, t5, n5) => {
             let r5 = a7.function.arguments, o7 = a7.function.name, s5 = {};
             try {
               s5 = untruncateJson(r5);
             } catch {
             }
-            return e3.onToolCallArgsEvent?.({ event: i4, messages: t5, state: n6, agent: f2, input: u3, toolCallBuffer: r5, toolCallName: o7, partialToolCallArgs: s5 });
+            return e3.onToolCallArgsEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3, toolCallBuffer: r5, toolCallName: o7, partialToolCallArgs: s5 });
           });
-          return _(o6), o6.stopPropagation !== true && (a7.function.arguments += n5, _({ messages: m })), v();
+          return _(o6), o6.stopPropagation !== true && (a7.function.arguments += n4, _({ messages: m })), v();
         }
         case EventType.TOOL_CALL_END: {
-          let { toolCallId: e2 } = i4, n5 = m.find((t5) => t5.toolCalls?.some((t6) => t6.id === e2));
-          if (!n5) return console.warn(`TOOL_CALL_END: No message found containing tool call with ID '${e2}'`), v();
-          let r4 = n5.toolCalls?.find((t5) => t5.id === e2);
-          return r4 ? (_(await t2(p, m, h, (e3, t5, n6) => {
+          let { toolCallId: e2 } = i4, n4 = m.find((t5) => t5.toolCalls?.some((t6) => t6.id === e2));
+          if (!n4) return console.warn(`TOOL_CALL_END: No message found containing tool call with ID '${e2}'`), v();
+          let r4 = n4.toolCalls?.find((t5) => t5.id === e2);
+          return r4 ? (_(await t2(p, m, h, (e3, t5, n5) => {
             let a7 = r4.function.arguments, o6 = r4.function.name, s5 = {};
             try {
               s5 = JSON.parse(a7);
             } catch {
             }
-            return e3.onToolCallEndEvent?.({ event: i4, messages: t5, state: n6, agent: f2, input: u3, toolCallName: o6, toolCallArgs: s5 });
+            return e3.onToolCallEndEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3, toolCallName: o6, toolCallArgs: s5 });
           })), await Promise.all(p.map((e3) => {
             e3.onNewToolCall?.({ toolCall: r4, messages: m, state: h, agent: f2, input: u3 });
           })), v()) : (console.warn(`TOOL_CALL_END: No tool call found with ID '${e2}'`), v());
         }
         case EventType.TOOL_CALL_RESULT: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onToolCallResultEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onToolCallResultEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
-            let { messageId: e3, toolCallId: t5, content: n5, role: r4 } = i4, a7 = { id: e3, toolCallId: t5, role: r4 || `tool`, content: n5 };
+            let { messageId: e3, toolCallId: t5, content: n4, role: r4 } = i4, a7 = { id: e3, toolCallId: t5, role: r4 || `tool`, content: n4 };
             m.push(a7), await Promise.all(p.map((e4) => {
               e4.onNewMessage?.({ message: a7, messages: m, state: h, agent: f2, input: u3 });
             })), _({ messages: m });
@@ -4711,7 +4711,7 @@
           return v();
         }
         case EventType.STATE_SNAPSHOT: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onStateSnapshotEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onStateSnapshotEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
             let { snapshot: e3 } = i4;
             h = e3, _({ state: h });
@@ -4719,23 +4719,23 @@
           return v();
         }
         case EventType.STATE_DELTA: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onStateDeltaEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onStateDeltaEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
             let { delta: e3 } = i4;
             try {
               h = applyPatch(h, e3, true, false).newDocument, _({ state: h });
             } catch (t5) {
-              let n5 = t5 instanceof Error ? t5.message : String(t5);
+              let n4 = t5 instanceof Error ? t5.message : String(t5);
               console.warn(`Failed to apply state patch:
 Current state: ${JSON.stringify(h, null, 2)}
 Patch operations: ${JSON.stringify(e3, null, 2)}
-Error: ${n5}`);
+Error: ${n4}`);
             }
           }
           return v();
         }
         case EventType.MESSAGES_SNAPSHOT: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onMessagesSnapshotEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onMessagesSnapshotEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
             let { messages: e3 } = i4;
             m = e3, _({ messages: m });
@@ -4743,34 +4743,34 @@ Error: ${n5}`);
           return v();
         }
         case EventType.ACTIVITY_SNAPSHOT: {
-          let n5 = i4, r4 = m.findIndex((e2) => e2.id === n5.messageId), a7 = r4 >= 0 ? m[r4] : void 0, o6 = a7?.role === `activity` ? a7 : void 0, s5 = n5.replace ?? true, c4 = await t2(p, m, h, (e2, t5, r5) => e2.onActivitySnapshotEvent?.({ event: n5, messages: t5, state: r5, agent: f2, input: u3, activityMessage: o6, existingMessage: a7 }));
-          if (_(c4), c4.stopPropagation !== true) {
-            let t5 = { id: n5.messageId, role: `activity`, activityType: n5.activityType, content: t(n5.content) }, i5;
-            r4 === -1 ? (m.push(t5), i5 = t5) : o6 ? s5 && (m[r4] = { ...o6, activityType: n5.activityType, content: t(n5.content) }) : s5 && (m[r4] = t5, i5 = t5), _({ messages: m }), i5 && await Promise.all(p.map((e2) => e2.onNewMessage?.({ message: i5, messages: m, state: h, agent: f2, input: u3 })));
+          let n4 = i4, r4 = m.findIndex((e2) => e2.id === n4.messageId), a7 = r4 >= 0 ? m[r4] : void 0, o6 = a7?.role === `activity` ? a7 : void 0, s5 = n4.replace ?? true, c3 = await t2(p, m, h, (e2, t5, r5) => e2.onActivitySnapshotEvent?.({ event: n4, messages: t5, state: r5, agent: f2, input: u3, activityMessage: o6, existingMessage: a7 }));
+          if (_(c3), c3.stopPropagation !== true) {
+            let t5 = { id: n4.messageId, role: `activity`, activityType: n4.activityType, content: t(n4.content) }, i5;
+            r4 === -1 ? (m.push(t5), i5 = t5) : o6 ? s5 && (m[r4] = { ...o6, activityType: n4.activityType, content: t(n4.content) }) : s5 && (m[r4] = t5, i5 = t5), _({ messages: m }), i5 && await Promise.all(p.map((e2) => e2.onNewMessage?.({ message: i5, messages: m, state: h, agent: f2, input: u3 })));
           }
           return v();
         }
         case EventType.ACTIVITY_DELTA: {
-          let n5 = i4, a7 = m.findIndex((e2) => e2.id === n5.messageId);
-          if (a7 === -1) return console.warn(`ACTIVITY_DELTA: No message found with ID '${n5.messageId}' to apply patch`), v();
+          let n4 = i4, a7 = m.findIndex((e2) => e2.id === n4.messageId);
+          if (a7 === -1) return console.warn(`ACTIVITY_DELTA: No message found with ID '${n4.messageId}' to apply patch`), v();
           let o6 = m[a7];
-          if (o6.role !== `activity`) return console.warn(`ACTIVITY_DELTA: Message '${n5.messageId}' is not an activity message`), v();
-          let s5 = o6, c4 = await t2(p, m, h, (e2, t5, r4) => e2.onActivityDeltaEvent?.({ event: n5, messages: t5, state: r4, agent: f2, input: u3, activityMessage: s5 }));
-          if (_(c4), c4.stopPropagation !== true) try {
-            let t5 = t(s5.content ?? {}), i5 = applyPatch(t5, n5.patch ?? [], true, false).newDocument;
-            m[a7] = { ...s5, content: t(i5), activityType: n5.activityType }, _({ messages: m });
+          if (o6.role !== `activity`) return console.warn(`ACTIVITY_DELTA: Message '${n4.messageId}' is not an activity message`), v();
+          let s5 = o6, c3 = await t2(p, m, h, (e2, t5, r4) => e2.onActivityDeltaEvent?.({ event: n4, messages: t5, state: r4, agent: f2, input: u3, activityMessage: s5 }));
+          if (_(c3), c3.stopPropagation !== true) try {
+            let t5 = t(s5.content ?? {}), i5 = applyPatch(t5, n4.patch ?? [], true, false).newDocument;
+            m[a7] = { ...s5, content: t(i5), activityType: n4.activityType }, _({ messages: m });
           } catch (e2) {
             let t5 = e2 instanceof Error ? e2.message : String(e2);
-            console.warn(`Failed to apply activity patch for '${n5.messageId}': ${t5}`);
+            console.warn(`Failed to apply activity patch for '${n4.messageId}': ${t5}`);
           }
           return v();
         }
         case EventType.RAW:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onRawEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onRawEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.CUSTOM:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onCustomEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onCustomEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.RUN_STARTED: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onRunStartedEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onRunStartedEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
             let e3 = i4;
             if (e3.input?.messages) {
@@ -4781,13 +4781,13 @@ Error: ${n5}`);
           return v();
         }
         case EventType.RUN_FINISHED:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onRunFinishedEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3, result: i4.result }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onRunFinishedEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3, result: i4.result }))), v();
         case EventType.RUN_ERROR:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onRunErrorEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onRunErrorEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.STEP_STARTED:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onStepStartedEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onStepStartedEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.STEP_FINISHED:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onStepFinishedEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onStepFinishedEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.TEXT_MESSAGE_CHUNK:
           throw Error(`TEXT_MESSAGE_CHUNK must be tranformed before being applied`);
         case EventType.TOOL_CALL_CHUNK:
@@ -4803,9 +4803,9 @@ Error: ${n5}`);
         case EventType.THINKING_TEXT_MESSAGE_END:
           return v();
         case EventType.REASONING_START:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onReasoningStartEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onReasoningStartEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.REASONING_MESSAGE_START: {
-          let e2 = await t2(p, m, h, (e3, t5, n5) => e3.onReasoningMessageStartEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
+          let e2 = await t2(p, m, h, (e3, t5, n4) => e3.onReasoningMessageStartEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }));
           if (_(e2), e2.stopPropagation !== true) {
             let { messageId: e3 } = i4;
             if (!m.find((t5) => t5.id === e3)) {
@@ -4816,35 +4816,35 @@ Error: ${n5}`);
           return v();
         }
         case EventType.REASONING_MESSAGE_CONTENT: {
-          let { messageId: e2, delta: n5 } = i4, r4 = m.find((t5) => t5.id === e2);
+          let { messageId: e2, delta: n4 } = i4, r4 = m.find((t5) => t5.id === e2);
           if (!r4) return console.warn(`REASONING_MESSAGE_CONTENT: No message found with ID '${e2}'`), v();
-          let a7 = await t2(p, m, h, (e3, t5, n6) => e3.onReasoningMessageContentEvent?.({ event: i4, messages: t5, state: n6, agent: f2, input: u3, reasoningMessageBuffer: typeof r4.content == `string` ? r4.content : `` }));
-          return _(a7), a7.stopPropagation !== true && (r4.content = `${typeof r4.content == `string` ? r4.content : ``}${n5}`, _({ messages: m })), v();
+          let a7 = await t2(p, m, h, (e3, t5, n5) => e3.onReasoningMessageContentEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3, reasoningMessageBuffer: typeof r4.content == `string` ? r4.content : `` }));
+          return _(a7), a7.stopPropagation !== true && (r4.content = `${typeof r4.content == `string` ? r4.content : ``}${n4}`, _({ messages: m })), v();
         }
         case EventType.REASONING_MESSAGE_END: {
-          let { messageId: e2 } = i4, n5 = m.find((t5) => t5.id === e2);
-          return n5 ? (_(await t2(p, m, h, (e3, t5, r4) => e3.onReasoningMessageEndEvent?.({ event: i4, messages: t5, state: r4, agent: f2, input: u3, reasoningMessageBuffer: typeof n5.content == `string` ? n5.content : `` }))), await Promise.all(p.map((e3) => {
-            e3.onNewMessage?.({ message: n5, messages: m, state: h, agent: f2, input: u3 });
+          let { messageId: e2 } = i4, n4 = m.find((t5) => t5.id === e2);
+          return n4 ? (_(await t2(p, m, h, (e3, t5, r4) => e3.onReasoningMessageEndEvent?.({ event: i4, messages: t5, state: r4, agent: f2, input: u3, reasoningMessageBuffer: typeof n4.content == `string` ? n4.content : `` }))), await Promise.all(p.map((e3) => {
+            e3.onNewMessage?.({ message: n4, messages: m, state: h, agent: f2, input: u3 });
           })), v()) : (console.warn(`REASONING_MESSAGE_END: No message found with ID '${e2}'`), v());
         }
         case EventType.REASONING_MESSAGE_CHUNK:
           throw Error(`REASONING_MESSAGE_CHUNK must be transformed before being applied`);
         case EventType.REASONING_END:
-          return _(await t2(p, m, h, (e2, t5, n5) => e2.onReasoningEndEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }))), v();
+          return _(await t2(p, m, h, (e2, t5, n4) => e2.onReasoningEndEvent?.({ event: i4, messages: t5, state: n4, agent: f2, input: u3 }))), v();
         case EventType.REASONING_ENCRYPTED_VALUE: {
-          let { subtype: e2, entityId: n5, encryptedValue: r4 } = i4, a7 = await t2(p, m, h, (e3, t5, n6) => e3.onReasoningEncryptedValueEvent?.({ event: i4, messages: t5, state: n6, agent: f2, input: u3 }));
+          let { subtype: e2, entityId: n4, encryptedValue: r4 } = i4, a7 = await t2(p, m, h, (e3, t5, n5) => e3.onReasoningEncryptedValueEvent?.({ event: i4, messages: t5, state: n5, agent: f2, input: u3 }));
           if (_(a7), a7.stopPropagation !== true) {
             let t5 = false;
             if (e2 === `tool-call`) {
               for (let e3 of m) if (e3.role === `assistant` && e3.toolCalls) {
-                let i5 = e3.toolCalls.find((e4) => e4.id === n5);
+                let i5 = e3.toolCalls.find((e4) => e4.id === n4);
                 if (i5) {
                   i5.encryptedValue = r4, t5 = true;
                   break;
                 }
               }
             } else {
-              let e3 = m.find((e4) => e4.id === n5);
+              let e3 = m.find((e4) => e4.id === n4);
               e3?.role !== `activity` && e3 && (e3.encryptedValue = r4, t5 = true);
             }
             t5 && (g.messages = m);
@@ -4858,8 +4858,8 @@ Error: ${n5}`);
 
   // ../../sdks/typescript/packages/client/dist/verify/verify.mjs
   var a = (a6) => (o6) => {
-    let s5 = /* @__PURE__ */ new Map(), c4 = /* @__PURE__ */ new Map(), l3 = false, u3 = false, d2 = false, f2 = /* @__PURE__ */ new Map(), p = false, m = false, h = false, g = () => {
-      s5.clear(), c4.clear(), f2.clear(), p = false, m = false, l3 = false, u3 = false, h = true;
+    let s5 = /* @__PURE__ */ new Map(), c3 = /* @__PURE__ */ new Map(), l3 = false, u3 = false, d2 = false, f2 = /* @__PURE__ */ new Map(), p = false, m = false, h = false, g = () => {
+      s5.clear(), c3.clear(), f2.clear(), p = false, m = false, l3 = false, u3 = false, h = true;
     };
     return o6.pipe(mergeMap((i4) => {
       let o7 = i4.type;
@@ -4886,15 +4886,15 @@ Error: ${n5}`);
         }
         case EventType.TOOL_CALL_START: {
           let t5 = i4.toolCallId;
-          return c4.has(t5) ? throwError(() => new AGUIError(`Cannot send 'TOOL_CALL_START' event: A tool call with ID '${t5}' is already in progress. Complete it with 'TOOL_CALL_END' first.`)) : (c4.set(t5, true), of(i4));
+          return c3.has(t5) ? throwError(() => new AGUIError(`Cannot send 'TOOL_CALL_START' event: A tool call with ID '${t5}' is already in progress. Complete it with 'TOOL_CALL_END' first.`)) : (c3.set(t5, true), of(i4));
         }
         case EventType.TOOL_CALL_ARGS: {
           let t5 = i4.toolCallId;
-          return c4.has(t5) ? of(i4) : throwError(() => new AGUIError(`Cannot send 'TOOL_CALL_ARGS' event: No active tool call found with ID '${t5}'. Start a tool call with 'TOOL_CALL_START' first.`));
+          return c3.has(t5) ? of(i4) : throwError(() => new AGUIError(`Cannot send 'TOOL_CALL_ARGS' event: No active tool call found with ID '${t5}'. Start a tool call with 'TOOL_CALL_START' first.`));
         }
         case EventType.TOOL_CALL_END: {
           let t5 = i4.toolCallId;
-          return c4.has(t5) ? (c4.delete(t5), of(i4)) : throwError(() => new AGUIError(`Cannot send 'TOOL_CALL_END' event: No active tool call found with ID '${t5}'. A 'TOOL_CALL_START' event must be sent first.`));
+          return c3.has(t5) ? (c3.delete(t5), of(i4)) : throwError(() => new AGUIError(`Cannot send 'TOOL_CALL_END' event: No active tool call found with ID '${t5}'. A 'TOOL_CALL_START' event must be sent first.`));
         }
         case EventType.STEP_STARTED: {
           let t5 = i4.stepName;
@@ -4915,8 +4915,8 @@ Error: ${n5}`);
             let t5 = Array.from(s5.keys()).join(`, `);
             return throwError(() => new AGUIError(`Cannot send 'RUN_FINISHED' while text messages are still active: ${t5}`));
           }
-          if (c4.size > 0) {
-            let t5 = Array.from(c4.keys()).join(`, `);
+          if (c3.size > 0) {
+            let t5 = Array.from(c3.keys()).join(`, `);
             return throwError(() => new AGUIError(`Cannot send 'RUN_FINISHED' while tool calls are still active: ${t5}`));
           }
           return l3 = true, of(i4);
@@ -4944,13 +4944,13 @@ Error: ${n5}`);
   var o = (function(e2) {
     return e2.HEADERS = `headers`, e2.DATA = `data`, e2;
   })({});
-  var s = (s5, c4) => defer(() => from(fetch(s5, c4))).pipe(switchMap((t5) => {
+  var s = (s5, c3) => defer(() => from(fetch(s5, c3))).pipe(switchMap((t5) => {
     if (!t5.ok) {
       let e2 = t5.headers.get(`content-type`) || ``;
-      return from(t5.text()).pipe(mergeMap((n5) => {
-        let i4 = n5;
+      return from(t5.text()).pipe(mergeMap((n4) => {
+        let i4 = n4;
         if (e2.includes(`application/json`)) try {
-          i4 = JSON.parse(n5);
+          i4 = JSON.parse(n4);
         } catch {
         }
         let a7 = Error(`HTTP ${t5.status}: ${typeof i4 == `string` ? i4 : JSON.stringify(i4)}`);
@@ -4961,9 +4961,9 @@ Error: ${n5}`);
     return s6 ? new Observable((e2) => (e2.next(a6), (async () => {
       try {
         for (; ; ) {
-          let { done: t6, value: n5 } = await s6.read();
+          let { done: t6, value: n4 } = await s6.read();
           if (t6) break;
-          let r4 = { type: o.DATA, data: n5 };
+          let r4 = { type: o.DATA, data: n4 };
           e2.next(r4);
         }
         e2.complete();
@@ -4977,2452 +4977,36 @@ Error: ${n5}`);
     })) : throwError(() => Error(`Failed to getReader() from response`));
   }));
 
-  // ../../sdks/typescript/packages/client/dist/transform/sse.mjs
-  var n2 = (n5) => {
-    let r4 = new Subject(), i4 = new TextDecoder(`utf-8`, { fatal: false }), a6 = ``;
-    n5.subscribe({ next: (t5) => {
-      if (t5.type !== o.HEADERS && t5.type === o.DATA && t5.data) {
-        let e2 = i4.decode(t5.data, { stream: true });
-        a6 += e2;
-        let n6 = a6.split(/\n\n/);
-        a6 = n6.pop() || ``;
-        for (let e3 of n6) o6(e3);
-      }
-    }, error: (e2) => r4.error(e2), complete: () => {
-      a6 && (a6 += i4.decode(), o6(a6)), r4.complete();
-    } });
-    function o6(e2) {
-      let t5 = e2.split(`
-`), n6 = [];
-      for (let e3 of t5) e3.startsWith(`data:`) && n6.push(e3.slice(5).replace(/^ /, ``));
-      if (n6.length > 0) try {
-        let e3 = n6.join(`
-`), t6 = JSON.parse(e3);
-        r4.next(t6);
-      } catch (e3) {
-        r4.error(e3);
-      }
-    }
-    return r4.asObservable();
-  };
-
-  // ../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js
-  function varint64read() {
-    let lowBits = 0;
-    let highBits = 0;
-    for (let shift = 0; shift < 28; shift += 7) {
-      let b = this.buf[this.pos++];
-      lowBits |= (b & 127) << shift;
-      if ((b & 128) == 0) {
-        this.assertBounds();
-        return [lowBits, highBits];
-      }
-    }
-    let middleByte = this.buf[this.pos++];
-    lowBits |= (middleByte & 15) << 28;
-    highBits = (middleByte & 112) >> 4;
-    if ((middleByte & 128) == 0) {
-      this.assertBounds();
-      return [lowBits, highBits];
-    }
-    for (let shift = 3; shift <= 31; shift += 7) {
-      let b = this.buf[this.pos++];
-      highBits |= (b & 127) << shift;
-      if ((b & 128) == 0) {
-        this.assertBounds();
-        return [lowBits, highBits];
-      }
-    }
-    throw new Error("invalid varint");
-  }
-  function varint64write(lo, hi, bytes) {
-    for (let i4 = 0; i4 < 28; i4 = i4 + 7) {
-      const shift = lo >>> i4;
-      const hasNext = !(shift >>> 7 == 0 && hi == 0);
-      const byte = (hasNext ? shift | 128 : shift) & 255;
-      bytes.push(byte);
-      if (!hasNext) {
-        return;
-      }
-    }
-    const splitBits = lo >>> 28 & 15 | (hi & 7) << 4;
-    const hasMoreBits = !(hi >> 3 == 0);
-    bytes.push((hasMoreBits ? splitBits | 128 : splitBits) & 255);
-    if (!hasMoreBits) {
-      return;
-    }
-    for (let i4 = 3; i4 < 31; i4 = i4 + 7) {
-      const shift = hi >>> i4;
-      const hasNext = !(shift >>> 7 == 0);
-      const byte = (hasNext ? shift | 128 : shift) & 255;
-      bytes.push(byte);
-      if (!hasNext) {
-        return;
-      }
-    }
-    bytes.push(hi >>> 31 & 1);
-  }
-  var TWO_PWR_32_DBL = 4294967296;
-  function int64FromString(dec) {
-    const minus = dec[0] === "-";
-    if (minus) {
-      dec = dec.slice(1);
-    }
-    const base = 1e6;
-    let lowBits = 0;
-    let highBits = 0;
-    function add1e6digit(begin, end) {
-      const digit1e6 = Number(dec.slice(begin, end));
-      highBits *= base;
-      lowBits = lowBits * base + digit1e6;
-      if (lowBits >= TWO_PWR_32_DBL) {
-        highBits = highBits + (lowBits / TWO_PWR_32_DBL | 0);
-        lowBits = lowBits % TWO_PWR_32_DBL;
-      }
-    }
-    add1e6digit(-24, -18);
-    add1e6digit(-18, -12);
-    add1e6digit(-12, -6);
-    add1e6digit(-6);
-    return minus ? negate(lowBits, highBits) : newBits(lowBits, highBits);
-  }
-  function int64ToString(lo, hi) {
-    let bits = newBits(lo, hi);
-    const negative = bits.hi & 2147483648;
-    if (negative) {
-      bits = negate(bits.lo, bits.hi);
-    }
-    const result = uInt64ToString(bits.lo, bits.hi);
-    return negative ? "-" + result : result;
-  }
-  function uInt64ToString(lo, hi) {
-    ({ lo, hi } = toUnsigned(lo, hi));
-    if (hi <= 2097151) {
-      return String(TWO_PWR_32_DBL * hi + lo);
-    }
-    const low = lo & 16777215;
-    const mid = (lo >>> 24 | hi << 8) & 16777215;
-    const high = hi >> 16 & 65535;
-    let digitA = low + mid * 6777216 + high * 6710656;
-    let digitB = mid + high * 8147497;
-    let digitC = high * 2;
-    const base = 1e7;
-    if (digitA >= base) {
-      digitB += Math.floor(digitA / base);
-      digitA %= base;
-    }
-    if (digitB >= base) {
-      digitC += Math.floor(digitB / base);
-      digitB %= base;
-    }
-    return digitC.toString() + decimalFrom1e7WithLeadingZeros(digitB) + decimalFrom1e7WithLeadingZeros(digitA);
-  }
-  function toUnsigned(lo, hi) {
-    return { lo: lo >>> 0, hi: hi >>> 0 };
-  }
-  function newBits(lo, hi) {
-    return { lo: lo | 0, hi: hi | 0 };
-  }
-  function negate(lowBits, highBits) {
-    highBits = ~highBits;
-    if (lowBits) {
-      lowBits = ~lowBits + 1;
-    } else {
-      highBits += 1;
-    }
-    return newBits(lowBits, highBits);
-  }
-  var decimalFrom1e7WithLeadingZeros = (digit1e7) => {
-    const partial2 = String(digit1e7);
-    return "0000000".slice(partial2.length) + partial2;
-  };
-  function varint32write(value, bytes) {
-    if (value >= 0) {
-      while (value > 127) {
-        bytes.push(value & 127 | 128);
-        value = value >>> 7;
-      }
-      bytes.push(value);
-    } else {
-      for (let i4 = 0; i4 < 9; i4++) {
-        bytes.push(value & 127 | 128);
-        value = value >> 7;
-      }
-      bytes.push(1);
-    }
-  }
-  function varint32read() {
-    let b = this.buf[this.pos++];
-    let result = b & 127;
-    if ((b & 128) == 0) {
-      this.assertBounds();
-      return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 127) << 7;
-    if ((b & 128) == 0) {
-      this.assertBounds();
-      return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 127) << 14;
-    if ((b & 128) == 0) {
-      this.assertBounds();
-      return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 127) << 21;
-    if ((b & 128) == 0) {
-      this.assertBounds();
-      return result;
-    }
-    b = this.buf[this.pos++];
-    result |= (b & 15) << 28;
-    for (let readBytes = 5; (b & 128) !== 0 && readBytes < 10; readBytes++)
-      b = this.buf[this.pos++];
-    if ((b & 128) != 0)
-      throw new Error("invalid varint");
-    this.assertBounds();
-    return result >>> 0;
-  }
-
-  // ../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/proto-int64.js
-  var protoInt64 = /* @__PURE__ */ makeInt64Support();
-  function makeInt64Support() {
-    const dv = new DataView(new ArrayBuffer(8));
-    const ok = typeof BigInt === "function" && typeof dv.getBigInt64 === "function" && typeof dv.getBigUint64 === "function" && typeof dv.setBigInt64 === "function" && typeof dv.setBigUint64 === "function" && (!!globalThis.Deno || typeof process != "object" || typeof process.env != "object" || process.env.BUF_BIGINT_DISABLE !== "1");
-    if (ok) {
-      const MIN = BigInt("-9223372036854775808");
-      const MAX = BigInt("9223372036854775807");
-      const UMIN = BigInt("0");
-      const UMAX = BigInt("18446744073709551615");
-      return {
-        zero: BigInt(0),
-        supported: true,
-        parse(value) {
-          const bi = typeof value == "bigint" ? value : BigInt(value);
-          if (bi > MAX || bi < MIN) {
-            throw new Error(`invalid int64: ${value}`);
-          }
-          return bi;
-        },
-        uParse(value) {
-          const bi = typeof value == "bigint" ? value : BigInt(value);
-          if (bi > UMAX || bi < UMIN) {
-            throw new Error(`invalid uint64: ${value}`);
-          }
-          return bi;
-        },
-        enc(value) {
-          dv.setBigInt64(0, this.parse(value), true);
-          return {
-            lo: dv.getInt32(0, true),
-            hi: dv.getInt32(4, true)
-          };
-        },
-        uEnc(value) {
-          dv.setBigInt64(0, this.uParse(value), true);
-          return {
-            lo: dv.getInt32(0, true),
-            hi: dv.getInt32(4, true)
-          };
-        },
-        dec(lo, hi) {
-          dv.setInt32(0, lo, true);
-          dv.setInt32(4, hi, true);
-          return dv.getBigInt64(0, true);
-        },
-        uDec(lo, hi) {
-          dv.setInt32(0, lo, true);
-          dv.setInt32(4, hi, true);
-          return dv.getBigUint64(0, true);
-        }
-      };
-    }
-    return {
-      zero: "0",
-      supported: false,
-      parse(value) {
-        if (typeof value != "string") {
-          value = value.toString();
-        }
-        assertInt64String(value);
-        return value;
-      },
-      uParse(value) {
-        if (typeof value != "string") {
-          value = value.toString();
-        }
-        assertUInt64String(value);
-        return value;
-      },
-      enc(value) {
-        if (typeof value != "string") {
-          value = value.toString();
-        }
-        assertInt64String(value);
-        return int64FromString(value);
-      },
-      uEnc(value) {
-        if (typeof value != "string") {
-          value = value.toString();
-        }
-        assertUInt64String(value);
-        return int64FromString(value);
-      },
-      dec(lo, hi) {
-        return int64ToString(lo, hi);
-      },
-      uDec(lo, hi) {
-        return uInt64ToString(lo, hi);
-      }
-    };
-  }
-  function assertInt64String(value) {
-    if (!/^-?[0-9]+$/.test(value)) {
-      throw new Error("invalid int64: " + value);
-    }
-  }
-  function assertUInt64String(value) {
-    if (!/^[0-9]+$/.test(value)) {
-      throw new Error("invalid uint64: " + value);
-    }
-  }
-
-  // ../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/wire/text-encoding.js
-  var symbol = /* @__PURE__ */ Symbol.for("@bufbuild/protobuf/text-encoding");
-  function getTextEncoding() {
-    if (globalThis[symbol] == void 0) {
-      const te = new globalThis.TextEncoder();
-      const td = new globalThis.TextDecoder();
-      globalThis[symbol] = {
-        encodeUtf8(text) {
-          return te.encode(text);
-        },
-        decodeUtf8(bytes) {
-          return td.decode(bytes);
-        },
-        checkUtf8(text) {
-          try {
-            encodeURIComponent(text);
-            return true;
-          } catch (_) {
-            return false;
-          }
-        }
-      };
-    }
-    return globalThis[symbol];
-  }
-
-  // ../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/wire/binary-encoding.js
-  var WireType;
-  (function(WireType2) {
-    WireType2[WireType2["Varint"] = 0] = "Varint";
-    WireType2[WireType2["Bit64"] = 1] = "Bit64";
-    WireType2[WireType2["LengthDelimited"] = 2] = "LengthDelimited";
-    WireType2[WireType2["StartGroup"] = 3] = "StartGroup";
-    WireType2[WireType2["EndGroup"] = 4] = "EndGroup";
-    WireType2[WireType2["Bit32"] = 5] = "Bit32";
-  })(WireType || (WireType = {}));
-  var FLOAT32_MAX = 34028234663852886e22;
-  var FLOAT32_MIN = -34028234663852886e22;
-  var UINT32_MAX = 4294967295;
-  var INT32_MAX = 2147483647;
-  var INT32_MIN = -2147483648;
-  var BinaryWriter = class {
-    constructor(encodeUtf8 = getTextEncoding().encodeUtf8) {
-      this.encodeUtf8 = encodeUtf8;
-      this.stack = [];
-      this.chunks = [];
-      this.buf = [];
-    }
-    /**
-     * Return all bytes written and reset this writer.
-     */
-    finish() {
-      if (this.buf.length) {
-        this.chunks.push(new Uint8Array(this.buf));
-        this.buf = [];
-      }
-      let len = 0;
-      for (let i4 = 0; i4 < this.chunks.length; i4++)
-        len += this.chunks[i4].length;
-      let bytes = new Uint8Array(len);
-      let offset = 0;
-      for (let i4 = 0; i4 < this.chunks.length; i4++) {
-        bytes.set(this.chunks[i4], offset);
-        offset += this.chunks[i4].length;
-      }
-      this.chunks = [];
-      return bytes;
-    }
-    /**
-     * Start a new fork for length-delimited data like a message
-     * or a packed repeated field.
-     *
-     * Must be joined later with `join()`.
-     */
-    fork() {
-      this.stack.push({ chunks: this.chunks, buf: this.buf });
-      this.chunks = [];
-      this.buf = [];
-      return this;
-    }
-    /**
-     * Join the last fork. Write its length and bytes, then
-     * return to the previous state.
-     */
-    join() {
-      let chunk = this.finish();
-      let prev = this.stack.pop();
-      if (!prev)
-        throw new Error("invalid state, fork stack empty");
-      this.chunks = prev.chunks;
-      this.buf = prev.buf;
-      this.uint32(chunk.byteLength);
-      return this.raw(chunk);
-    }
-    /**
-     * Writes a tag (field number and wire type).
-     *
-     * Equivalent to `uint32( (fieldNo << 3 | type) >>> 0 )`.
-     *
-     * Generated code should compute the tag ahead of time and call `uint32()`.
-     */
-    tag(fieldNo, type) {
-      return this.uint32((fieldNo << 3 | type) >>> 0);
-    }
-    /**
-     * Write a chunk of raw bytes.
-     */
-    raw(chunk) {
-      if (this.buf.length) {
-        this.chunks.push(new Uint8Array(this.buf));
-        this.buf = [];
-      }
-      this.chunks.push(chunk);
-      return this;
-    }
-    /**
-     * Write a `uint32` value, an unsigned 32 bit varint.
-     */
-    uint32(value) {
-      assertUInt32(value);
-      while (value > 127) {
-        this.buf.push(value & 127 | 128);
-        value = value >>> 7;
-      }
-      this.buf.push(value);
-      return this;
-    }
-    /**
-     * Write a `int32` value, a signed 32 bit varint.
-     */
-    int32(value) {
-      assertInt32(value);
-      varint32write(value, this.buf);
-      return this;
-    }
-    /**
-     * Write a `bool` value, a variant.
-     */
-    bool(value) {
-      this.buf.push(value ? 1 : 0);
-      return this;
-    }
-    /**
-     * Write a `bytes` value, length-delimited arbitrary data.
-     */
-    bytes(value) {
-      this.uint32(value.byteLength);
-      return this.raw(value);
-    }
-    /**
-     * Write a `string` value, length-delimited data converted to UTF-8 text.
-     */
-    string(value) {
-      let chunk = this.encodeUtf8(value);
-      this.uint32(chunk.byteLength);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `float` value, 32-bit floating point number.
-     */
-    float(value) {
-      assertFloat32(value);
-      let chunk = new Uint8Array(4);
-      new DataView(chunk.buffer).setFloat32(0, value, true);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `double` value, a 64-bit floating point number.
-     */
-    double(value) {
-      let chunk = new Uint8Array(8);
-      new DataView(chunk.buffer).setFloat64(0, value, true);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `fixed32` value, an unsigned, fixed-length 32-bit integer.
-     */
-    fixed32(value) {
-      assertUInt32(value);
-      let chunk = new Uint8Array(4);
-      new DataView(chunk.buffer).setUint32(0, value, true);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `sfixed32` value, a signed, fixed-length 32-bit integer.
-     */
-    sfixed32(value) {
-      assertInt32(value);
-      let chunk = new Uint8Array(4);
-      new DataView(chunk.buffer).setInt32(0, value, true);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `sint32` value, a signed, zigzag-encoded 32-bit varint.
-     */
-    sint32(value) {
-      assertInt32(value);
-      value = (value << 1 ^ value >> 31) >>> 0;
-      varint32write(value, this.buf);
-      return this;
-    }
-    /**
-     * Write a `fixed64` value, a signed, fixed-length 64-bit integer.
-     */
-    sfixed64(value) {
-      let chunk = new Uint8Array(8), view = new DataView(chunk.buffer), tc = protoInt64.enc(value);
-      view.setInt32(0, tc.lo, true);
-      view.setInt32(4, tc.hi, true);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `fixed64` value, an unsigned, fixed-length 64 bit integer.
-     */
-    fixed64(value) {
-      let chunk = new Uint8Array(8), view = new DataView(chunk.buffer), tc = protoInt64.uEnc(value);
-      view.setInt32(0, tc.lo, true);
-      view.setInt32(4, tc.hi, true);
-      return this.raw(chunk);
-    }
-    /**
-     * Write a `int64` value, a signed 64-bit varint.
-     */
-    int64(value) {
-      let tc = protoInt64.enc(value);
-      varint64write(tc.lo, tc.hi, this.buf);
-      return this;
-    }
-    /**
-     * Write a `sint64` value, a signed, zig-zag-encoded 64-bit varint.
-     */
-    sint64(value) {
-      const tc = protoInt64.enc(value), sign = tc.hi >> 31, lo = tc.lo << 1 ^ sign, hi = (tc.hi << 1 | tc.lo >>> 31) ^ sign;
-      varint64write(lo, hi, this.buf);
-      return this;
-    }
-    /**
-     * Write a `uint64` value, an unsigned 64-bit varint.
-     */
-    uint64(value) {
-      const tc = protoInt64.uEnc(value);
-      varint64write(tc.lo, tc.hi, this.buf);
-      return this;
-    }
-  };
-  var BinaryReader = class {
-    constructor(buf, decodeUtf8 = getTextEncoding().decodeUtf8) {
-      this.decodeUtf8 = decodeUtf8;
-      this.varint64 = varint64read;
-      this.uint32 = varint32read;
-      this.buf = buf;
-      this.len = buf.length;
-      this.pos = 0;
-      this.view = new DataView(buf.buffer, buf.byteOffset, buf.byteLength);
-    }
-    /**
-     * Reads a tag - field number and wire type.
-     */
-    tag() {
-      let tag = this.uint32(), fieldNo = tag >>> 3, wireType = tag & 7;
-      if (fieldNo <= 0 || wireType < 0 || wireType > 5)
-        throw new Error("illegal tag: field no " + fieldNo + " wire type " + wireType);
-      return [fieldNo, wireType];
-    }
-    /**
-     * Skip one element and return the skipped data.
-     *
-     * When skipping StartGroup, provide the tags field number to check for
-     * matching field number in the EndGroup tag.
-     */
-    skip(wireType, fieldNo) {
-      let start = this.pos;
-      switch (wireType) {
-        case WireType.Varint:
-          while (this.buf[this.pos++] & 128) {
-          }
-          break;
-        // @ts-ignore TS7029: Fallthrough case in switch -- ignore instead of expect-error for compiler settings without noFallthroughCasesInSwitch: true
-        case WireType.Bit64:
-          this.pos += 4;
-        case WireType.Bit32:
-          this.pos += 4;
-          break;
-        case WireType.LengthDelimited:
-          let len = this.uint32();
-          this.pos += len;
-          break;
-        case WireType.StartGroup:
-          for (; ; ) {
-            const [fn, wt] = this.tag();
-            if (wt === WireType.EndGroup) {
-              if (fieldNo !== void 0 && fn !== fieldNo) {
-                throw new Error("invalid end group tag");
-              }
-              break;
-            }
-            this.skip(wt, fn);
-          }
-          break;
-        default:
-          throw new Error("cant skip wire type " + wireType);
-      }
-      this.assertBounds();
-      return this.buf.subarray(start, this.pos);
-    }
-    /**
-     * Throws error if position in byte array is out of range.
-     */
-    assertBounds() {
-      if (this.pos > this.len)
-        throw new RangeError("premature EOF");
-    }
-    /**
-     * Read a `int32` field, a signed 32 bit varint.
-     */
-    int32() {
-      return this.uint32() | 0;
-    }
-    /**
-     * Read a `sint32` field, a signed, zigzag-encoded 32-bit varint.
-     */
-    sint32() {
-      let zze = this.uint32();
-      return zze >>> 1 ^ -(zze & 1);
-    }
-    /**
-     * Read a `int64` field, a signed 64-bit varint.
-     */
-    int64() {
-      return protoInt64.dec(...this.varint64());
-    }
-    /**
-     * Read a `uint64` field, an unsigned 64-bit varint.
-     */
-    uint64() {
-      return protoInt64.uDec(...this.varint64());
-    }
-    /**
-     * Read a `sint64` field, a signed, zig-zag-encoded 64-bit varint.
-     */
-    sint64() {
-      let [lo, hi] = this.varint64();
-      let s5 = -(lo & 1);
-      lo = (lo >>> 1 | (hi & 1) << 31) ^ s5;
-      hi = hi >>> 1 ^ s5;
-      return protoInt64.dec(lo, hi);
-    }
-    /**
-     * Read a `bool` field, a variant.
-     */
-    bool() {
-      let [lo, hi] = this.varint64();
-      return lo !== 0 || hi !== 0;
-    }
-    /**
-     * Read a `fixed32` field, an unsigned, fixed-length 32-bit integer.
-     */
-    fixed32() {
-      return this.view.getUint32((this.pos += 4) - 4, true);
-    }
-    /**
-     * Read a `sfixed32` field, a signed, fixed-length 32-bit integer.
-     */
-    sfixed32() {
-      return this.view.getInt32((this.pos += 4) - 4, true);
-    }
-    /**
-     * Read a `fixed64` field, an unsigned, fixed-length 64 bit integer.
-     */
-    fixed64() {
-      return protoInt64.uDec(this.sfixed32(), this.sfixed32());
-    }
-    /**
-     * Read a `fixed64` field, a signed, fixed-length 64-bit integer.
-     */
-    sfixed64() {
-      return protoInt64.dec(this.sfixed32(), this.sfixed32());
-    }
-    /**
-     * Read a `float` field, 32-bit floating point number.
-     */
-    float() {
-      return this.view.getFloat32((this.pos += 4) - 4, true);
-    }
-    /**
-     * Read a `double` field, a 64-bit floating point number.
-     */
-    double() {
-      return this.view.getFloat64((this.pos += 8) - 8, true);
-    }
-    /**
-     * Read a `bytes` field, length-delimited arbitrary data.
-     */
-    bytes() {
-      let len = this.uint32(), start = this.pos;
-      this.pos += len;
-      this.assertBounds();
-      return this.buf.subarray(start, start + len);
-    }
-    /**
-     * Read a `string` field, length-delimited data converted to UTF-8 text.
-     */
-    string() {
-      return this.decodeUtf8(this.bytes());
-    }
-  };
-  function assertInt32(arg) {
-    if (typeof arg == "string") {
-      arg = Number(arg);
-    } else if (typeof arg != "number") {
-      throw new Error("invalid int32: " + typeof arg);
-    }
-    if (!Number.isInteger(arg) || arg > INT32_MAX || arg < INT32_MIN)
-      throw new Error("invalid int32: " + arg);
-  }
-  function assertUInt32(arg) {
-    if (typeof arg == "string") {
-      arg = Number(arg);
-    } else if (typeof arg != "number") {
-      throw new Error("invalid uint32: " + typeof arg);
-    }
-    if (!Number.isInteger(arg) || arg > UINT32_MAX || arg < 0)
-      throw new Error("invalid uint32: " + arg);
-  }
-  function assertFloat32(arg) {
-    if (typeof arg == "string") {
-      const o6 = arg;
-      arg = Number(arg);
-      if (Number.isNaN(arg) && o6 !== "NaN") {
-        throw new Error("invalid float32: " + o6);
-      }
-    } else if (typeof arg != "number") {
-      throw new Error("invalid float32: " + typeof arg);
-    }
-    if (Number.isFinite(arg) && (arg > FLOAT32_MAX || arg < FLOAT32_MIN))
-      throw new Error("invalid float32: " + arg);
-  }
-
-  // ../../sdks/typescript/packages/proto/dist/generated/google/protobuf/struct.mjs
-  var NullValue = /* @__PURE__ */ (function(NullValue2) {
-    NullValue2[NullValue2["NULL_VALUE"] = 0] = "NULL_VALUE";
-    NullValue2[NullValue2["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
-    return NullValue2;
-  })({});
-  function createBaseStruct() {
-    return { fields: {} };
-  }
-  var Struct = {
-    encode(message, writer = new BinaryWriter()) {
-      globalThis.Object.entries(message.fields).forEach(([key, value]) => {
-        if (value !== void 0) Struct_FieldsEntry.encode({
-          key,
-          value
-        }, writer.uint32(10).fork()).join();
-      });
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseStruct();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1: {
-            if (tag !== 10) break;
-            const entry1 = Struct_FieldsEntry.decode(reader, reader.uint32());
-            if (entry1.value !== void 0) message.fields[entry1.key] = entry1.value;
-            continue;
-          }
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return Struct.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseStruct();
-      message.fields = globalThis.Object.entries(object2.fields ?? {}).reduce((acc, [key, value]) => {
-        if (value !== void 0) acc[key] = value;
-        return acc;
-      }, {});
-      return message;
-    },
-    wrap(object2) {
-      const struct = createBaseStruct();
-      if (object2 !== void 0) for (const key of globalThis.Object.keys(object2)) struct.fields[key] = object2[key];
-      return struct;
-    },
-    unwrap(message) {
-      const object2 = {};
-      if (message.fields) for (const key of globalThis.Object.keys(message.fields)) object2[key] = message.fields[key];
-      return object2;
-    }
-  };
-  function createBaseStruct_FieldsEntry() {
-    return {
-      key: "",
-      value: void 0
-    };
-  }
-  var Struct_FieldsEntry = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.key !== "") writer.uint32(10).string(message.key);
-      if (message.value !== void 0) Value.encode(Value.wrap(message.value), writer.uint32(18).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseStruct_FieldsEntry();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.key = reader.string();
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return Struct_FieldsEntry.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseStruct_FieldsEntry();
-      message.key = object2.key ?? "";
-      message.value = object2.value ?? void 0;
-      return message;
-    }
-  };
-  function createBaseValue() {
-    return {
-      nullValue: void 0,
-      numberValue: void 0,
-      stringValue: void 0,
-      boolValue: void 0,
-      structValue: void 0,
-      listValue: void 0
-    };
-  }
-  var Value = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.nullValue !== void 0) writer.uint32(8).int32(message.nullValue);
-      if (message.numberValue !== void 0) writer.uint32(17).double(message.numberValue);
-      if (message.stringValue !== void 0) writer.uint32(26).string(message.stringValue);
-      if (message.boolValue !== void 0) writer.uint32(32).bool(message.boolValue);
-      if (message.structValue !== void 0) Struct.encode(Struct.wrap(message.structValue), writer.uint32(42).fork()).join();
-      if (message.listValue !== void 0) ListValue.encode(ListValue.wrap(message.listValue), writer.uint32(50).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseValue();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 8) break;
-            message.nullValue = reader.int32();
-            continue;
-          case 2:
-            if (tag !== 17) break;
-            message.numberValue = reader.double();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.stringValue = reader.string();
-            continue;
-          case 4:
-            if (tag !== 32) break;
-            message.boolValue = reader.bool();
-            continue;
-          case 5:
-            if (tag !== 42) break;
-            message.structValue = Struct.unwrap(Struct.decode(reader, reader.uint32()));
-            continue;
-          case 6:
-            if (tag !== 50) break;
-            message.listValue = ListValue.unwrap(ListValue.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return Value.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseValue();
-      message.nullValue = object2.nullValue ?? void 0;
-      message.numberValue = object2.numberValue ?? void 0;
-      message.stringValue = object2.stringValue ?? void 0;
-      message.boolValue = object2.boolValue ?? void 0;
-      message.structValue = object2.structValue ?? void 0;
-      message.listValue = object2.listValue ?? void 0;
-      return message;
-    },
-    wrap(value) {
-      const result = createBaseValue();
-      if (value === null) result.nullValue = NullValue.NULL_VALUE;
-      else if (typeof value === "boolean") result.boolValue = value;
-      else if (typeof value === "number") result.numberValue = value;
-      else if (typeof value === "string") result.stringValue = value;
-      else if (globalThis.Array.isArray(value)) result.listValue = value;
-      else if (typeof value === "object") result.structValue = value;
-      else if (typeof value !== "undefined") throw new globalThis.Error("Unsupported any value type: " + typeof value);
-      return result;
-    },
-    unwrap(message) {
-      if (message.stringValue !== void 0) return message.stringValue;
-      else if (message?.numberValue !== void 0) return message.numberValue;
-      else if (message?.boolValue !== void 0) return message.boolValue;
-      else if (message?.structValue !== void 0) return message.structValue;
-      else if (message?.listValue !== void 0) return message.listValue;
-      else if (message?.nullValue !== void 0) return null;
-    }
-  };
-  function createBaseListValue() {
-    return { values: [] };
-  }
-  var ListValue = {
-    encode(message, writer = new BinaryWriter()) {
-      for (const v of message.values) Value.encode(Value.wrap(v), writer.uint32(10).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseListValue();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.values.push(Value.unwrap(Value.decode(reader, reader.uint32())));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ListValue.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseListValue();
-      message.values = object2.values?.map((e2) => e2) || [];
-      return message;
-    },
-    wrap(array2) {
-      const result = createBaseListValue();
-      result.values = array2 ?? [];
-      return result;
-    },
-    unwrap(message) {
-      if (message?.hasOwnProperty("values") && globalThis.Array.isArray(message.values)) return message.values;
-      else return message;
-    }
-  };
-
-  // ../../sdks/typescript/packages/proto/dist/generated/patch.mjs
-  var JsonPatchOperationType = /* @__PURE__ */ (function(JsonPatchOperationType2) {
-    JsonPatchOperationType2[JsonPatchOperationType2["ADD"] = 0] = "ADD";
-    JsonPatchOperationType2[JsonPatchOperationType2["REMOVE"] = 1] = "REMOVE";
-    JsonPatchOperationType2[JsonPatchOperationType2["REPLACE"] = 2] = "REPLACE";
-    JsonPatchOperationType2[JsonPatchOperationType2["MOVE"] = 3] = "MOVE";
-    JsonPatchOperationType2[JsonPatchOperationType2["COPY"] = 4] = "COPY";
-    JsonPatchOperationType2[JsonPatchOperationType2["TEST"] = 5] = "TEST";
-    JsonPatchOperationType2[JsonPatchOperationType2["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
-    return JsonPatchOperationType2;
-  })({});
-  function createBaseJsonPatchOperation() {
-    return {
-      op: 0,
-      path: "",
-      from: void 0,
-      value: void 0
-    };
-  }
-  var JsonPatchOperation = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.op !== 0) writer.uint32(8).int32(message.op);
-      if (message.path !== "") writer.uint32(18).string(message.path);
-      if (message.from !== void 0) writer.uint32(26).string(message.from);
-      if (message.value !== void 0) Value.encode(Value.wrap(message.value), writer.uint32(34).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseJsonPatchOperation();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 8) break;
-            message.op = reader.int32();
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.path = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.from = reader.string();
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return JsonPatchOperation.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseJsonPatchOperation();
-      message.op = object2.op ?? 0;
-      message.path = object2.path ?? "";
-      message.from = object2.from ?? void 0;
-      message.value = object2.value ?? void 0;
-      return message;
-    }
-  };
-
-  // ../../sdks/typescript/packages/proto/dist/generated/types.mjs
-  function createBaseToolCall() {
-    return {
-      id: "",
-      type: "",
-      function: void 0
-    };
-  }
-  var ToolCall = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.id !== "") writer.uint32(10).string(message.id);
-      if (message.type !== "") writer.uint32(18).string(message.type);
-      if (message.function !== void 0) ToolCall_Function.encode(message.function, writer.uint32(26).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseToolCall();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.id = reader.string();
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.type = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.function = ToolCall_Function.decode(reader, reader.uint32());
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ToolCall.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseToolCall();
-      message.id = object2.id ?? "";
-      message.type = object2.type ?? "";
-      message.function = object2.function !== void 0 && object2.function !== null ? ToolCall_Function.fromPartial(object2.function) : void 0;
-      return message;
-    }
-  };
-  function createBaseToolCall_Function() {
-    return {
-      name: "",
-      arguments: ""
-    };
-  }
-  var ToolCall_Function = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.name !== "") writer.uint32(10).string(message.name);
-      if (message.arguments !== "") writer.uint32(18).string(message.arguments);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseToolCall_Function();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.name = reader.string();
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.arguments = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ToolCall_Function.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseToolCall_Function();
-      message.name = object2.name ?? "";
-      message.arguments = object2.arguments ?? "";
-      return message;
-    }
-  };
-  function createBaseMessage() {
-    return {
-      id: "",
-      role: "",
-      content: void 0,
-      name: void 0,
-      toolCalls: [],
-      toolCallId: void 0,
-      error: void 0
-    };
-  }
-  var Message = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.id !== "") writer.uint32(10).string(message.id);
-      if (message.role !== "") writer.uint32(18).string(message.role);
-      if (message.content !== void 0) writer.uint32(26).string(message.content);
-      if (message.name !== void 0) writer.uint32(34).string(message.name);
-      for (const v of message.toolCalls) ToolCall.encode(v, writer.uint32(42).fork()).join();
-      if (message.toolCallId !== void 0) writer.uint32(50).string(message.toolCallId);
-      if (message.error !== void 0) writer.uint32(58).string(message.error);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseMessage();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.id = reader.string();
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.role = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.content = reader.string();
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.name = reader.string();
-            continue;
-          case 5:
-            if (tag !== 42) break;
-            message.toolCalls.push(ToolCall.decode(reader, reader.uint32()));
-            continue;
-          case 6:
-            if (tag !== 50) break;
-            message.toolCallId = reader.string();
-            continue;
-          case 7:
-            if (tag !== 58) break;
-            message.error = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return Message.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseMessage();
-      message.id = object2.id ?? "";
-      message.role = object2.role ?? "";
-      message.content = object2.content ?? void 0;
-      message.name = object2.name ?? void 0;
-      message.toolCalls = object2.toolCalls?.map((e2) => ToolCall.fromPartial(e2)) || [];
-      message.toolCallId = object2.toolCallId ?? void 0;
-      message.error = object2.error ?? void 0;
-      return message;
-    }
-  };
-
-  // ../../sdks/typescript/packages/proto/dist/generated/events.mjs
-  var EventType2 = /* @__PURE__ */ (function(EventType3) {
-    EventType3[EventType3["TEXT_MESSAGE_START"] = 0] = "TEXT_MESSAGE_START";
-    EventType3[EventType3["TEXT_MESSAGE_CONTENT"] = 1] = "TEXT_MESSAGE_CONTENT";
-    EventType3[EventType3["TEXT_MESSAGE_END"] = 2] = "TEXT_MESSAGE_END";
-    EventType3[EventType3["TOOL_CALL_START"] = 3] = "TOOL_CALL_START";
-    EventType3[EventType3["TOOL_CALL_ARGS"] = 4] = "TOOL_CALL_ARGS";
-    EventType3[EventType3["TOOL_CALL_END"] = 5] = "TOOL_CALL_END";
-    EventType3[EventType3["STATE_SNAPSHOT"] = 6] = "STATE_SNAPSHOT";
-    EventType3[EventType3["STATE_DELTA"] = 7] = "STATE_DELTA";
-    EventType3[EventType3["MESSAGES_SNAPSHOT"] = 8] = "MESSAGES_SNAPSHOT";
-    EventType3[EventType3["RAW"] = 9] = "RAW";
-    EventType3[EventType3["CUSTOM"] = 10] = "CUSTOM";
-    EventType3[EventType3["RUN_STARTED"] = 11] = "RUN_STARTED";
-    EventType3[EventType3["RUN_FINISHED"] = 12] = "RUN_FINISHED";
-    EventType3[EventType3["RUN_ERROR"] = 13] = "RUN_ERROR";
-    EventType3[EventType3["STEP_STARTED"] = 14] = "STEP_STARTED";
-    EventType3[EventType3["STEP_FINISHED"] = 15] = "STEP_FINISHED";
-    EventType3[EventType3["UNRECOGNIZED"] = -1] = "UNRECOGNIZED";
-    return EventType3;
-  })({});
-  function createBaseBaseEvent() {
-    return {
-      type: 0,
-      timestamp: void 0,
-      rawEvent: void 0
-    };
-  }
-  var BaseEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.type !== 0) writer.uint32(8).int32(message.type);
-      if (message.timestamp !== void 0) writer.uint32(16).int64(message.timestamp);
-      if (message.rawEvent !== void 0) Value.encode(Value.wrap(message.rawEvent), writer.uint32(26).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseBaseEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 8) break;
-            message.type = reader.int32();
-            continue;
-          case 2:
-            if (tag !== 16) break;
-            message.timestamp = longToNumber(reader.int64());
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.rawEvent = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return BaseEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseBaseEvent();
-      message.type = object2.type ?? 0;
-      message.timestamp = object2.timestamp ?? void 0;
-      message.rawEvent = object2.rawEvent ?? void 0;
-      return message;
-    }
-  };
-  function createBaseTextMessageStartEvent() {
-    return {
-      baseEvent: void 0,
-      messageId: "",
-      role: void 0
-    };
-  }
-  var TextMessageStartEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.messageId !== "") writer.uint32(18).string(message.messageId);
-      if (message.role !== void 0) writer.uint32(26).string(message.role);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseTextMessageStartEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.messageId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.role = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return TextMessageStartEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseTextMessageStartEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.messageId = object2.messageId ?? "";
-      message.role = object2.role ?? void 0;
-      return message;
-    }
-  };
-  function createBaseTextMessageContentEvent() {
-    return {
-      baseEvent: void 0,
-      messageId: "",
-      delta: ""
-    };
-  }
-  var TextMessageContentEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.messageId !== "") writer.uint32(18).string(message.messageId);
-      if (message.delta !== "") writer.uint32(26).string(message.delta);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseTextMessageContentEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.messageId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.delta = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return TextMessageContentEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseTextMessageContentEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.messageId = object2.messageId ?? "";
-      message.delta = object2.delta ?? "";
-      return message;
-    }
-  };
-  function createBaseTextMessageEndEvent() {
-    return {
-      baseEvent: void 0,
-      messageId: ""
-    };
-  }
-  var TextMessageEndEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.messageId !== "") writer.uint32(18).string(message.messageId);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseTextMessageEndEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.messageId = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return TextMessageEndEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseTextMessageEndEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.messageId = object2.messageId ?? "";
-      return message;
-    }
-  };
-  function createBaseToolCallStartEvent() {
-    return {
-      baseEvent: void 0,
-      toolCallId: "",
-      toolCallName: "",
-      parentMessageId: void 0
-    };
-  }
-  var ToolCallStartEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.toolCallId !== "") writer.uint32(18).string(message.toolCallId);
-      if (message.toolCallName !== "") writer.uint32(26).string(message.toolCallName);
-      if (message.parentMessageId !== void 0) writer.uint32(34).string(message.parentMessageId);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseToolCallStartEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.toolCallId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.toolCallName = reader.string();
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.parentMessageId = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ToolCallStartEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseToolCallStartEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.toolCallId = object2.toolCallId ?? "";
-      message.toolCallName = object2.toolCallName ?? "";
-      message.parentMessageId = object2.parentMessageId ?? void 0;
-      return message;
-    }
-  };
-  function createBaseToolCallArgsEvent() {
-    return {
-      baseEvent: void 0,
-      toolCallId: "",
-      delta: ""
-    };
-  }
-  var ToolCallArgsEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.toolCallId !== "") writer.uint32(18).string(message.toolCallId);
-      if (message.delta !== "") writer.uint32(26).string(message.delta);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseToolCallArgsEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.toolCallId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.delta = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ToolCallArgsEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseToolCallArgsEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.toolCallId = object2.toolCallId ?? "";
-      message.delta = object2.delta ?? "";
-      return message;
-    }
-  };
-  function createBaseToolCallEndEvent() {
-    return {
-      baseEvent: void 0,
-      toolCallId: ""
-    };
-  }
-  var ToolCallEndEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.toolCallId !== "") writer.uint32(18).string(message.toolCallId);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseToolCallEndEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.toolCallId = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ToolCallEndEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseToolCallEndEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.toolCallId = object2.toolCallId ?? "";
-      return message;
-    }
-  };
-  function createBaseStateSnapshotEvent() {
-    return {
-      baseEvent: void 0,
-      snapshot: void 0
-    };
-  }
-  var StateSnapshotEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.snapshot !== void 0) Value.encode(Value.wrap(message.snapshot), writer.uint32(18).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseStateSnapshotEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.snapshot = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return StateSnapshotEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseStateSnapshotEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.snapshot = object2.snapshot ?? void 0;
-      return message;
-    }
-  };
-  function createBaseStateDeltaEvent() {
-    return {
-      baseEvent: void 0,
-      delta: []
-    };
-  }
-  var StateDeltaEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      for (const v of message.delta) JsonPatchOperation.encode(v, writer.uint32(18).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseStateDeltaEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.delta.push(JsonPatchOperation.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return StateDeltaEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseStateDeltaEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.delta = object2.delta?.map((e2) => JsonPatchOperation.fromPartial(e2)) || [];
-      return message;
-    }
-  };
-  function createBaseMessagesSnapshotEvent() {
-    return {
-      baseEvent: void 0,
-      messages: []
-    };
-  }
-  var MessagesSnapshotEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      for (const v of message.messages) Message.encode(v, writer.uint32(18).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseMessagesSnapshotEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.messages.push(Message.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return MessagesSnapshotEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseMessagesSnapshotEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.messages = object2.messages?.map((e2) => Message.fromPartial(e2)) || [];
-      return message;
-    }
-  };
-  function createBaseRawEvent() {
-    return {
-      baseEvent: void 0,
-      event: void 0,
-      source: void 0
-    };
-  }
-  var RawEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.event !== void 0) Value.encode(Value.wrap(message.event), writer.uint32(18).fork()).join();
-      if (message.source !== void 0) writer.uint32(26).string(message.source);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseRawEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.event = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.source = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return RawEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseRawEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.event = object2.event ?? void 0;
-      message.source = object2.source ?? void 0;
-      return message;
-    }
-  };
-  function createBaseCustomEvent() {
-    return {
-      baseEvent: void 0,
-      name: "",
-      value: void 0
-    };
-  }
-  var CustomEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.name !== "") writer.uint32(18).string(message.name);
-      if (message.value !== void 0) Value.encode(Value.wrap(message.value), writer.uint32(26).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseCustomEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.name = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.value = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return CustomEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseCustomEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.name = object2.name ?? "";
-      message.value = object2.value ?? void 0;
-      return message;
-    }
-  };
-  function createBaseRunStartedEvent() {
-    return {
-      baseEvent: void 0,
-      threadId: "",
-      runId: ""
-    };
-  }
-  var RunStartedEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.threadId !== "") writer.uint32(18).string(message.threadId);
-      if (message.runId !== "") writer.uint32(26).string(message.runId);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseRunStartedEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.threadId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.runId = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return RunStartedEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseRunStartedEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.threadId = object2.threadId ?? "";
-      message.runId = object2.runId ?? "";
-      return message;
-    }
-  };
-  function createBaseRunFinishedEvent() {
-    return {
-      baseEvent: void 0,
-      threadId: "",
-      runId: "",
-      result: void 0
-    };
-  }
-  var RunFinishedEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.threadId !== "") writer.uint32(18).string(message.threadId);
-      if (message.runId !== "") writer.uint32(26).string(message.runId);
-      if (message.result !== void 0) Value.encode(Value.wrap(message.result), writer.uint32(34).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseRunFinishedEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.threadId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.runId = reader.string();
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.result = Value.unwrap(Value.decode(reader, reader.uint32()));
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return RunFinishedEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseRunFinishedEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.threadId = object2.threadId ?? "";
-      message.runId = object2.runId ?? "";
-      message.result = object2.result ?? void 0;
-      return message;
-    }
-  };
-  function createBaseRunErrorEvent() {
-    return {
-      baseEvent: void 0,
-      code: void 0,
-      message: ""
-    };
-  }
-  var RunErrorEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.code !== void 0) writer.uint32(18).string(message.code);
-      if (message.message !== "") writer.uint32(26).string(message.message);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseRunErrorEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.code = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.message = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return RunErrorEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseRunErrorEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.code = object2.code ?? void 0;
-      message.message = object2.message ?? "";
-      return message;
-    }
-  };
-  function createBaseStepStartedEvent() {
-    return {
-      baseEvent: void 0,
-      stepName: ""
-    };
-  }
-  var StepStartedEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.stepName !== "") writer.uint32(18).string(message.stepName);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseStepStartedEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.stepName = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return StepStartedEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseStepStartedEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.stepName = object2.stepName ?? "";
-      return message;
-    }
-  };
-  function createBaseStepFinishedEvent() {
-    return {
-      baseEvent: void 0,
-      stepName: ""
-    };
-  }
-  var StepFinishedEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.stepName !== "") writer.uint32(18).string(message.stepName);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseStepFinishedEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.stepName = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return StepFinishedEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseStepFinishedEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.stepName = object2.stepName ?? "";
-      return message;
-    }
-  };
-  function createBaseTextMessageChunkEvent() {
-    return {
-      baseEvent: void 0,
-      messageId: void 0,
-      role: void 0,
-      delta: void 0
-    };
-  }
-  var TextMessageChunkEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.messageId !== void 0) writer.uint32(18).string(message.messageId);
-      if (message.role !== void 0) writer.uint32(26).string(message.role);
-      if (message.delta !== void 0) writer.uint32(34).string(message.delta);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseTextMessageChunkEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.messageId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.role = reader.string();
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.delta = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return TextMessageChunkEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseTextMessageChunkEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.messageId = object2.messageId ?? void 0;
-      message.role = object2.role ?? void 0;
-      message.delta = object2.delta ?? void 0;
-      return message;
-    }
-  };
-  function createBaseToolCallChunkEvent() {
-    return {
-      baseEvent: void 0,
-      toolCallId: void 0,
-      toolCallName: void 0,
-      parentMessageId: void 0,
-      delta: void 0
-    };
-  }
-  var ToolCallChunkEvent = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.baseEvent !== void 0) BaseEvent.encode(message.baseEvent, writer.uint32(10).fork()).join();
-      if (message.toolCallId !== void 0) writer.uint32(18).string(message.toolCallId);
-      if (message.toolCallName !== void 0) writer.uint32(26).string(message.toolCallName);
-      if (message.parentMessageId !== void 0) writer.uint32(34).string(message.parentMessageId);
-      if (message.delta !== void 0) writer.uint32(42).string(message.delta);
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseToolCallChunkEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.baseEvent = BaseEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.toolCallId = reader.string();
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.toolCallName = reader.string();
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.parentMessageId = reader.string();
-            continue;
-          case 5:
-            if (tag !== 42) break;
-            message.delta = reader.string();
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return ToolCallChunkEvent.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseToolCallChunkEvent();
-      message.baseEvent = object2.baseEvent !== void 0 && object2.baseEvent !== null ? BaseEvent.fromPartial(object2.baseEvent) : void 0;
-      message.toolCallId = object2.toolCallId ?? void 0;
-      message.toolCallName = object2.toolCallName ?? void 0;
-      message.parentMessageId = object2.parentMessageId ?? void 0;
-      message.delta = object2.delta ?? void 0;
-      return message;
-    }
-  };
-  function createBaseEvent() {
-    return {
-      textMessageStart: void 0,
-      textMessageContent: void 0,
-      textMessageEnd: void 0,
-      toolCallStart: void 0,
-      toolCallArgs: void 0,
-      toolCallEnd: void 0,
-      stateSnapshot: void 0,
-      stateDelta: void 0,
-      messagesSnapshot: void 0,
-      raw: void 0,
-      custom: void 0,
-      runStarted: void 0,
-      runFinished: void 0,
-      runError: void 0,
-      stepStarted: void 0,
-      stepFinished: void 0,
-      textMessageChunk: void 0,
-      toolCallChunk: void 0
-    };
-  }
-  var Event = {
-    encode(message, writer = new BinaryWriter()) {
-      if (message.textMessageStart !== void 0) TextMessageStartEvent.encode(message.textMessageStart, writer.uint32(10).fork()).join();
-      if (message.textMessageContent !== void 0) TextMessageContentEvent.encode(message.textMessageContent, writer.uint32(18).fork()).join();
-      if (message.textMessageEnd !== void 0) TextMessageEndEvent.encode(message.textMessageEnd, writer.uint32(26).fork()).join();
-      if (message.toolCallStart !== void 0) ToolCallStartEvent.encode(message.toolCallStart, writer.uint32(34).fork()).join();
-      if (message.toolCallArgs !== void 0) ToolCallArgsEvent.encode(message.toolCallArgs, writer.uint32(42).fork()).join();
-      if (message.toolCallEnd !== void 0) ToolCallEndEvent.encode(message.toolCallEnd, writer.uint32(50).fork()).join();
-      if (message.stateSnapshot !== void 0) StateSnapshotEvent.encode(message.stateSnapshot, writer.uint32(58).fork()).join();
-      if (message.stateDelta !== void 0) StateDeltaEvent.encode(message.stateDelta, writer.uint32(66).fork()).join();
-      if (message.messagesSnapshot !== void 0) MessagesSnapshotEvent.encode(message.messagesSnapshot, writer.uint32(74).fork()).join();
-      if (message.raw !== void 0) RawEvent.encode(message.raw, writer.uint32(82).fork()).join();
-      if (message.custom !== void 0) CustomEvent.encode(message.custom, writer.uint32(90).fork()).join();
-      if (message.runStarted !== void 0) RunStartedEvent.encode(message.runStarted, writer.uint32(98).fork()).join();
-      if (message.runFinished !== void 0) RunFinishedEvent.encode(message.runFinished, writer.uint32(106).fork()).join();
-      if (message.runError !== void 0) RunErrorEvent.encode(message.runError, writer.uint32(114).fork()).join();
-      if (message.stepStarted !== void 0) StepStartedEvent.encode(message.stepStarted, writer.uint32(122).fork()).join();
-      if (message.stepFinished !== void 0) StepFinishedEvent.encode(message.stepFinished, writer.uint32(130).fork()).join();
-      if (message.textMessageChunk !== void 0) TextMessageChunkEvent.encode(message.textMessageChunk, writer.uint32(138).fork()).join();
-      if (message.toolCallChunk !== void 0) ToolCallChunkEvent.encode(message.toolCallChunk, writer.uint32(146).fork()).join();
-      return writer;
-    },
-    decode(input, length) {
-      const reader = input instanceof BinaryReader ? input : new BinaryReader(input);
-      const end = length === void 0 ? reader.len : reader.pos + length;
-      const message = createBaseEvent();
-      while (reader.pos < end) {
-        const tag = reader.uint32();
-        switch (tag >>> 3) {
-          case 1:
-            if (tag !== 10) break;
-            message.textMessageStart = TextMessageStartEvent.decode(reader, reader.uint32());
-            continue;
-          case 2:
-            if (tag !== 18) break;
-            message.textMessageContent = TextMessageContentEvent.decode(reader, reader.uint32());
-            continue;
-          case 3:
-            if (tag !== 26) break;
-            message.textMessageEnd = TextMessageEndEvent.decode(reader, reader.uint32());
-            continue;
-          case 4:
-            if (tag !== 34) break;
-            message.toolCallStart = ToolCallStartEvent.decode(reader, reader.uint32());
-            continue;
-          case 5:
-            if (tag !== 42) break;
-            message.toolCallArgs = ToolCallArgsEvent.decode(reader, reader.uint32());
-            continue;
-          case 6:
-            if (tag !== 50) break;
-            message.toolCallEnd = ToolCallEndEvent.decode(reader, reader.uint32());
-            continue;
-          case 7:
-            if (tag !== 58) break;
-            message.stateSnapshot = StateSnapshotEvent.decode(reader, reader.uint32());
-            continue;
-          case 8:
-            if (tag !== 66) break;
-            message.stateDelta = StateDeltaEvent.decode(reader, reader.uint32());
-            continue;
-          case 9:
-            if (tag !== 74) break;
-            message.messagesSnapshot = MessagesSnapshotEvent.decode(reader, reader.uint32());
-            continue;
-          case 10:
-            if (tag !== 82) break;
-            message.raw = RawEvent.decode(reader, reader.uint32());
-            continue;
-          case 11:
-            if (tag !== 90) break;
-            message.custom = CustomEvent.decode(reader, reader.uint32());
-            continue;
-          case 12:
-            if (tag !== 98) break;
-            message.runStarted = RunStartedEvent.decode(reader, reader.uint32());
-            continue;
-          case 13:
-            if (tag !== 106) break;
-            message.runFinished = RunFinishedEvent.decode(reader, reader.uint32());
-            continue;
-          case 14:
-            if (tag !== 114) break;
-            message.runError = RunErrorEvent.decode(reader, reader.uint32());
-            continue;
-          case 15:
-            if (tag !== 122) break;
-            message.stepStarted = StepStartedEvent.decode(reader, reader.uint32());
-            continue;
-          case 16:
-            if (tag !== 130) break;
-            message.stepFinished = StepFinishedEvent.decode(reader, reader.uint32());
-            continue;
-          case 17:
-            if (tag !== 138) break;
-            message.textMessageChunk = TextMessageChunkEvent.decode(reader, reader.uint32());
-            continue;
-          case 18:
-            if (tag !== 146) break;
-            message.toolCallChunk = ToolCallChunkEvent.decode(reader, reader.uint32());
-            continue;
-        }
-        if ((tag & 7) === 4 || tag === 0) break;
-        reader.skip(tag & 7);
-      }
-      return message;
-    },
-    create(base) {
-      return Event.fromPartial(base ?? {});
-    },
-    fromPartial(object2) {
-      const message = createBaseEvent();
-      message.textMessageStart = object2.textMessageStart !== void 0 && object2.textMessageStart !== null ? TextMessageStartEvent.fromPartial(object2.textMessageStart) : void 0;
-      message.textMessageContent = object2.textMessageContent !== void 0 && object2.textMessageContent !== null ? TextMessageContentEvent.fromPartial(object2.textMessageContent) : void 0;
-      message.textMessageEnd = object2.textMessageEnd !== void 0 && object2.textMessageEnd !== null ? TextMessageEndEvent.fromPartial(object2.textMessageEnd) : void 0;
-      message.toolCallStart = object2.toolCallStart !== void 0 && object2.toolCallStart !== null ? ToolCallStartEvent.fromPartial(object2.toolCallStart) : void 0;
-      message.toolCallArgs = object2.toolCallArgs !== void 0 && object2.toolCallArgs !== null ? ToolCallArgsEvent.fromPartial(object2.toolCallArgs) : void 0;
-      message.toolCallEnd = object2.toolCallEnd !== void 0 && object2.toolCallEnd !== null ? ToolCallEndEvent.fromPartial(object2.toolCallEnd) : void 0;
-      message.stateSnapshot = object2.stateSnapshot !== void 0 && object2.stateSnapshot !== null ? StateSnapshotEvent.fromPartial(object2.stateSnapshot) : void 0;
-      message.stateDelta = object2.stateDelta !== void 0 && object2.stateDelta !== null ? StateDeltaEvent.fromPartial(object2.stateDelta) : void 0;
-      message.messagesSnapshot = object2.messagesSnapshot !== void 0 && object2.messagesSnapshot !== null ? MessagesSnapshotEvent.fromPartial(object2.messagesSnapshot) : void 0;
-      message.raw = object2.raw !== void 0 && object2.raw !== null ? RawEvent.fromPartial(object2.raw) : void 0;
-      message.custom = object2.custom !== void 0 && object2.custom !== null ? CustomEvent.fromPartial(object2.custom) : void 0;
-      message.runStarted = object2.runStarted !== void 0 && object2.runStarted !== null ? RunStartedEvent.fromPartial(object2.runStarted) : void 0;
-      message.runFinished = object2.runFinished !== void 0 && object2.runFinished !== null ? RunFinishedEvent.fromPartial(object2.runFinished) : void 0;
-      message.runError = object2.runError !== void 0 && object2.runError !== null ? RunErrorEvent.fromPartial(object2.runError) : void 0;
-      message.stepStarted = object2.stepStarted !== void 0 && object2.stepStarted !== null ? StepStartedEvent.fromPartial(object2.stepStarted) : void 0;
-      message.stepFinished = object2.stepFinished !== void 0 && object2.stepFinished !== null ? StepFinishedEvent.fromPartial(object2.stepFinished) : void 0;
-      message.textMessageChunk = object2.textMessageChunk !== void 0 && object2.textMessageChunk !== null ? TextMessageChunkEvent.fromPartial(object2.textMessageChunk) : void 0;
-      message.toolCallChunk = object2.toolCallChunk !== void 0 && object2.toolCallChunk !== null ? ToolCallChunkEvent.fromPartial(object2.toolCallChunk) : void 0;
-      return message;
-    }
-  };
-  function longToNumber(int64) {
-    const num = globalThis.Number(int64.toString());
-    if (num > globalThis.Number.MAX_SAFE_INTEGER) throw new globalThis.Error("Value is larger than Number.MAX_SAFE_INTEGER");
-    if (num < globalThis.Number.MIN_SAFE_INTEGER) throw new globalThis.Error("Value is smaller than Number.MIN_SAFE_INTEGER");
-    return num;
-  }
-
-  // ../../sdks/typescript/packages/proto/dist/proto.mjs
-  function decode2(data) {
-    const event = Event.decode(data);
-    const decoded = Object.values(event).find((value) => value !== void 0);
-    if (!decoded) throw new Error("Invalid event");
-    decoded.type = EventType2[decoded.baseEvent.type];
-    decoded.timestamp = decoded.baseEvent.timestamp;
-    decoded.rawEvent = decoded.baseEvent.rawEvent;
-    if (decoded.type === EventType.MESSAGES_SNAPSHOT) for (const message of decoded.messages) {
-      const untypedMessage = message;
-      if (untypedMessage.toolCalls?.length === 0) untypedMessage.toolCalls = void 0;
-    }
-    if (decoded.type === EventType.STATE_DELTA) for (const operation of decoded.delta) {
-      operation.op = JsonPatchOperationType[operation.op].toLowerCase();
-      Object.keys(operation).forEach((key) => {
-        if (operation[key] === void 0) delete operation[key];
-      });
-    }
-    Object.keys(decoded).forEach((key) => {
-      if (decoded[key] === void 0) delete decoded[key];
-    });
-    return EventSchemas.parse(decoded);
-  }
-
-  // ../../sdks/typescript/packages/proto/dist/index.mjs
-  var AGUI_MEDIA_TYPE = "application/vnd.ag-ui.event+proto";
-
-  // ../../sdks/typescript/packages/client/dist/transform/proto.mjs
-  var r = (r4) => {
-    let i4 = new Subject(), a6 = new Uint8Array();
-    r4.subscribe({ next: (t5) => {
-      if (t5.type !== o.HEADERS && t5.type === o.DATA && t5.data) {
-        let e2 = new Uint8Array(a6.length + t5.data.length);
-        e2.set(a6, 0), e2.set(t5.data, a6.length), a6 = e2, o6();
-      }
-    }, error: (e2) => i4.error(e2), complete: () => {
-      if (a6.length > 0) try {
-        o6();
-      } catch {
-        console.warn(`Incomplete or invalid protocol buffer data at stream end`);
-      }
-      i4.complete();
-    } });
-    function o6() {
-      for (; a6.length >= 4; ) {
-        let e2 = 4 + new DataView(a6.buffer, a6.byteOffset, 4).getUint32(0, false);
-        if (a6.length < e2) break;
-        try {
-          let t5 = decode2(a6.slice(4, e2));
-          i4.next(t5), a6 = a6.slice(e2);
-        } catch (e3) {
-          let t5 = e3 instanceof Error ? e3.message : String(e3);
-          i4.error(Error(`Failed to decode protocol buffer message: ${t5}`));
-          return;
-        }
-      }
-    }
-    return i4.asObservable();
-  };
-
-  // ../../sdks/typescript/packages/client/dist/transform/http.mjs
-  var c = (c4) => {
-    let l3 = new Subject(), u3 = new ReplaySubject(), d2 = false;
-    return c4.subscribe({ next: (a6) => {
-      u3.next(a6), a6.type === o.HEADERS && !d2 ? (d2 = true, a6.headers.get(`content-type`) === AGUI_MEDIA_TYPE ? r(u3).subscribe({ next: (e2) => l3.next(e2), error: (e2) => l3.error(e2), complete: () => l3.complete() }) : n2(u3).subscribe({ next: (e2) => {
-        try {
-          let t5 = EventSchemas.parse(e2);
-          l3.next(t5);
-        } catch (e3) {
-          l3.error(e3);
-        }
-      }, error: (e2) => {
-        if (e2?.name === `AbortError`) {
-          l3.next({ type: EventType.RUN_ERROR, message: e2.message || `Request aborted`, code: `abort`, rawEvent: e2 }), l3.complete();
-          return;
-        }
-        return l3.error(e2);
-      }, complete: () => l3.complete() })) : d2 || l3.error(Error(`No headers event received before data events`));
+  // ../../sdks/typescript/packages/client/dist/transform/factory.mjs
+  var r = (r4) => (i4) => {
+    let a6 = new Subject(), o6 = new ReplaySubject(), s5 = false;
+    return i4.subscribe({ next: (t5) => {
+      if (o6.next(t5), t5.type === o.HEADERS && !s5) {
+        s5 = true;
+        let e2 = t5.headers.get(`content-type`), n4 = r4.find((e3) => e3.condition(t5));
+        n4 ? n4.parser(o6, a6) : a6.error(Error(`Unsupported content type: ${e2}`));
+      } else s5 || a6.error(Error(`No headers event received before data events`));
     }, error: (e2) => {
-      u3.error(e2), l3.error(e2);
+      o6.error(e2), a6.error(e2);
     }, complete: () => {
-      u3.complete();
-    } }), l3.asObservable();
+      o6.complete();
+    } }), a6.asObservable();
   };
 
   // ../../sdks/typescript/packages/client/dist/legacy/types.mjs
   var t3 = _enum([`TextMessageStart`, `TextMessageContent`, `TextMessageEnd`, `ActionExecutionStart`, `ActionExecutionArgs`, `ActionExecutionEnd`, `ActionExecutionResult`, `AgentStateMessage`, `MetaEvent`, `RunStarted`, `RunFinished`, `RunError`, `NodeStarted`, `NodeFinished`]);
-  var n3 = _enum([`LangGraphInterruptEvent`, `PredictState`, `Exit`]);
+  var n2 = _enum([`LangGraphInterruptEvent`, `PredictState`, `Exit`]);
   var r2 = object({ type: literal(t3.def.entries.TextMessageStart), messageId: string2(), parentMessageId: optional(string2()), role: optional(string2()) });
   var i = object({ type: literal(t3.def.entries.TextMessageContent), messageId: string2(), content: string2() });
   var a2 = object({ type: literal(t3.def.entries.TextMessageEnd), messageId: string2() });
   var o2 = object({ type: literal(t3.def.entries.ActionExecutionStart), actionExecutionId: string2(), actionName: string2(), parentMessageId: optional(string2()) });
   var s2 = object({ type: literal(t3.def.entries.ActionExecutionArgs), actionExecutionId: string2(), args: string2() });
-  var c2 = object({ type: literal(t3.def.entries.ActionExecutionEnd), actionExecutionId: string2() });
+  var c = object({ type: literal(t3.def.entries.ActionExecutionEnd), actionExecutionId: string2() });
   var l = object({ type: literal(t3.def.entries.ActionExecutionResult), actionName: string2(), actionExecutionId: string2(), result: string2() });
   var u2 = object({ type: literal(t3.def.entries.AgentStateMessage), threadId: string2(), agentName: string2(), nodeName: string2(), runId: string2(), active: boolean2(), role: string2(), state: string2(), running: boolean2() });
-  var d = object({ type: literal(t3.def.entries.MetaEvent), name: n3, value: any() });
+  var d = object({ type: literal(t3.def.entries.MetaEvent), name: n2, value: any() });
   var f = object({ type: literal(t3.def.entries.RunError), message: string2(), code: optional(string2()) });
-  discriminatedUnion(`type`, [r2, i, a2, o2, s2, c2, l, u2, d, f]), object({ id: string2(), role: string2(), content: string2(), parentMessageId: optional(string2()) }), object({ id: string2(), name: string2(), arguments: any(), parentMessageId: optional(string2()) }), object({ id: string2(), result: any(), actionExecutionId: string2(), actionName: string2() });
+  discriminatedUnion(`type`, [r2, i, a2, o2, s2, c, l, u2, d, f]), object({ id: string2(), role: string2(), content: string2(), parentMessageId: optional(string2()) }), object({ id: string2(), name: string2(), arguments: any(), parentMessageId: optional(string2()) }), object({ id: string2(), result: any(), actionExecutionId: string2(), actionName: string2() });
 
   // ../../sdks/typescript/packages/client/dist/legacy/convert.mjs
   var a3 = (e2) => {
@@ -7432,7 +5016,7 @@ Error: ${n5}`);
     if (t5.length !== 0) return t5.join(`
 `);
   };
-  var o3 = (a6, o6, c4) => (l3) => {
+  var o3 = (a6, o6, c3) => (l3) => {
     let u3 = {}, d2 = true, f2 = true, p = ``, m = null, h = null, g = [], _ = {}, v = (e2) => {
       typeof e2 == `object` && e2 && (`messages` in e2 && delete e2.messages, u3 = e2);
     };
@@ -7455,19 +5039,19 @@ Error: ${n5}`);
           return g.push({ id: t5.toolCallId, type: `function`, function: { name: t5.toolCallName, arguments: `` } }), f2 = true, _[t5.toolCallId] = t5.toolCallName, [{ type: t3.def.entries.ActionExecutionStart, actionExecutionId: t5.toolCallId, actionName: t5.toolCallName, parentMessageId: t5.parentMessageId }];
         }
         case EventType.TOOL_CALL_ARGS: {
-          let t5 = r4, n5 = g.find((e2) => e2.id === t5.toolCallId);
-          if (!n5) return console.warn(`TOOL_CALL_ARGS: No tool call found with ID '${t5.toolCallId}'`), [];
-          n5.function.arguments += t5.delta;
+          let t5 = r4, n4 = g.find((e2) => e2.id === t5.toolCallId);
+          if (!n4) return console.warn(`TOOL_CALL_ARGS: No tool call found with ID '${t5.toolCallId}'`), [];
+          n4.function.arguments += t5.delta;
           let s5 = false;
           if (h) {
-            let e2 = h.find((e3) => e3.tool == n5.function.name);
+            let e2 = h.find((e3) => e3.tool == n4.function.name);
             if (e2) try {
-              let t6 = JSON.parse(untruncateJson(n5.function.arguments));
+              let t6 = JSON.parse(untruncateJson(n4.function.arguments));
               e2.tool_argument && e2.tool_argument in t6 ? (v({ ...u3, [e2.state_key]: t6[e2.tool_argument] }), s5 = true) : e2.tool_argument || (v({ ...u3, [e2.state_key]: t6 }), s5 = true);
             } catch {
             }
           }
-          return [{ type: t3.def.entries.ActionExecutionArgs, actionExecutionId: t5.toolCallId, args: t5.delta }, ...s5 ? [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: f2 }] : []];
+          return [{ type: t3.def.entries.ActionExecutionArgs, actionExecutionId: t5.toolCallId, args: t5.delta }, ...s5 ? [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: f2 }] : []];
         }
         case EventType.TOOL_CALL_END: {
           let t5 = r4;
@@ -7492,25 +5076,25 @@ Error: ${n5}`);
           return [{ type: t3.def.entries.MetaEvent, name: t5.name, value: t5.value }];
         }
         case EventType.STATE_SNAPSHOT:
-          return v(r4.snapshot), [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: f2 }];
+          return v(r4.snapshot), [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: f2 }];
         case EventType.STATE_DELTA: {
           let t5 = r4, i4 = applyPatch(u3, t5.delta, true, false);
-          return i4 ? (v(i4.newDocument), [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: f2 }]) : [];
+          return i4 ? (v(i4.newDocument), [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: f2 }]) : [];
         }
         case EventType.MESSAGES_SNAPSHOT:
-          return m = r4.messages, [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify({ ...u3, ...m ? { messages: m } : {} }), active: true }];
+          return m = r4.messages, [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify({ ...u3, ...m ? { messages: m } : {} }), active: true }];
         case EventType.RUN_STARTED:
           return [];
         case EventType.RUN_FINISHED:
-          return m && (u3.messages = m), Object.keys(u3).length === 0 ? [] : [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify({ ...u3, ...m ? { messages: s3(m) } : {} }), active: false }];
+          return m && (u3.messages = m), Object.keys(u3).length === 0 ? [] : [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify({ ...u3, ...m ? { messages: s3(m) } : {} }), active: false }];
         case EventType.RUN_ERROR: {
           let t5 = r4;
           return [{ type: t3.def.entries.RunError, message: t5.message, code: t5.code }];
         }
         case EventType.STEP_STARTED:
-          return p = r4.stepName, g = [], h = null, [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: true }];
+          return p = r4.stepName, g = [], h = null, [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: true }];
         case EventType.STEP_FINISHED:
-          return g = [], h = null, [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c4, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: false }];
+          return g = [], h = null, [{ type: t3.def.entries.AgentStateMessage, threadId: a6, agentName: c3, nodeName: p, runId: o6, running: d2, role: `assistant`, state: JSON.stringify(u3), active: false }];
         default:
           return [];
       }
@@ -7518,25 +5102,25 @@ Error: ${n5}`);
   };
   function s3(e2) {
     let t5 = [];
-    for (let n5 of e2) if (n5.role === `assistant` || n5.role === `user` || n5.role === `system`) {
-      let e3 = a3(n5.content);
+    for (let n4 of e2) if (n4.role === `assistant` || n4.role === `user` || n4.role === `system`) {
+      let e3 = a3(n4.content);
       if (e3) {
-        let r4 = { id: n5.id, role: n5.role, content: e3 };
+        let r4 = { id: n4.id, role: n4.role, content: e3 };
         t5.push(r4);
       }
-      if (n5.role === `assistant` && n5.toolCalls && n5.toolCalls.length > 0) for (let e4 of n5.toolCalls) {
-        let r4 = { id: e4.id, name: e4.function.name, arguments: JSON.parse(e4.function.arguments), parentMessageId: n5.id };
+      if (n4.role === `assistant` && n4.toolCalls && n4.toolCalls.length > 0) for (let e4 of n4.toolCalls) {
+        let r4 = { id: e4.id, name: e4.function.name, arguments: JSON.parse(e4.function.arguments), parentMessageId: n4.id };
         t5.push(r4);
       }
-    } else if (n5.role === `tool`) {
+    } else if (n4.role === `tool`) {
       let r4 = `unknown`;
       for (let t6 of e2) if (t6.role === `assistant` && t6.toolCalls?.length) {
-        for (let e3 of t6.toolCalls) if (e3.id === n5.toolCallId) {
+        for (let e3 of t6.toolCalls) if (e3.id === n4.toolCallId) {
           r4 = e3.function.name;
           break;
         }
       }
-      let i4 = { id: n5.id, result: n5.content, actionExecutionId: n5.toolCallId, actionName: r4 };
+      let i4 = { id: n4.id, result: n4.content, actionExecutionId: n4.toolCallId, actionName: r4 };
       t5.push(i4);
     }
     return t5;
@@ -7544,19 +5128,19 @@ Error: ${n5}`);
 
   // ../../sdks/typescript/packages/client/dist/chunks/transform.mjs
   var r3 = (r4) => (i4) => {
-    let a6, o6, s5, c4, l3 = () => {
-      if (!a6 || c4 !== `text`) throw Error(`No text message to close`);
+    let a6, o6, s5, c3, l3 = () => {
+      if (!a6 || c3 !== `text`) throw Error(`No text message to close`);
       let t5 = { type: EventType.TEXT_MESSAGE_END, messageId: a6.messageId };
-      return c4 = void 0, a6 = void 0, r4 && console.debug(`[TRANSFORM]: TEXT_MESSAGE_END`, JSON.stringify(t5)), t5;
+      return c3 = void 0, a6 = void 0, r4 && console.debug(`[TRANSFORM]: TEXT_MESSAGE_END`, JSON.stringify(t5)), t5;
     }, u3 = () => {
-      if (!o6 || c4 !== `tool`) throw Error(`No tool call to close`);
+      if (!o6 || c3 !== `tool`) throw Error(`No tool call to close`);
       let t5 = { type: EventType.TOOL_CALL_END, toolCallId: o6.toolCallId };
-      return c4 = void 0, o6 = void 0, r4 && console.debug(`[TRANSFORM]: TOOL_CALL_END`, JSON.stringify(t5)), t5;
+      return c3 = void 0, o6 = void 0, r4 && console.debug(`[TRANSFORM]: TOOL_CALL_END`, JSON.stringify(t5)), t5;
     }, d2 = () => {
-      if (!s5 || c4 !== `reasoning`) throw Error(`No reasoning message to close`);
+      if (!s5 || c3 !== `reasoning`) throw Error(`No reasoning message to close`);
       let t5 = { type: EventType.REASONING_MESSAGE_END, messageId: s5.messageId };
-      return c4 = void 0, s5 = void 0, r4 && console.debug(`[TRANSFORM]: REASONING_MESSAGE_END`, JSON.stringify(t5)), t5;
-    }, f2 = () => c4 === `text` ? [l3()] : c4 === `tool` ? [u3()] : c4 === `reasoning` ? [d2()] : [];
+      return c3 = void 0, s5 = void 0, r4 && console.debug(`[TRANSFORM]: REASONING_MESSAGE_END`, JSON.stringify(t5)), t5;
+    }, f2 = () => c3 === `text` ? [l3()] : c3 === `tool` ? [u3()] : c3 === `reasoning` ? [d2()] : [];
     return i4.pipe(mergeMap((t5) => {
       switch (t5.type) {
         case EventType.TEXT_MESSAGE_START:
@@ -7592,24 +5176,24 @@ Error: ${n5}`);
         case EventType.REASONING_ENCRYPTED_VALUE:
           return [t5];
         case EventType.TEXT_MESSAGE_CHUNK:
-          let n5 = t5, i5 = [];
-          if ((c4 !== `text` || n5.messageId !== void 0 && n5.messageId !== a6?.messageId) && i5.push(...f2()), c4 !== `text`) {
-            if (n5.messageId === void 0) throw Error(`First TEXT_MESSAGE_CHUNK must have a messageId`);
-            a6 = { messageId: n5.messageId }, c4 = `text`;
-            let t6 = { type: EventType.TEXT_MESSAGE_START, messageId: n5.messageId, role: n5.role || `assistant` };
+          let n4 = t5, i5 = [];
+          if ((c3 !== `text` || n4.messageId !== void 0 && n4.messageId !== a6?.messageId) && i5.push(...f2()), c3 !== `text`) {
+            if (n4.messageId === void 0) throw Error(`First TEXT_MESSAGE_CHUNK must have a messageId`);
+            a6 = { messageId: n4.messageId }, c3 = `text`;
+            let t6 = { type: EventType.TEXT_MESSAGE_START, messageId: n4.messageId, role: n4.role || `assistant` };
             i5.push(t6), r4 && console.debug(`[TRANSFORM]: TEXT_MESSAGE_START`, JSON.stringify(t6));
           }
-          if (n5.delta !== void 0) {
-            let t6 = { type: EventType.TEXT_MESSAGE_CONTENT, messageId: a6.messageId, delta: n5.delta };
+          if (n4.delta !== void 0) {
+            let t6 = { type: EventType.TEXT_MESSAGE_CONTENT, messageId: a6.messageId, delta: n4.delta };
             i5.push(t6), r4 && console.debug(`[TRANSFORM]: TEXT_MESSAGE_CONTENT`, JSON.stringify(t6));
           }
           return i5;
         case EventType.TOOL_CALL_CHUNK:
           let l4 = t5, u4 = [];
-          if ((c4 !== `tool` || l4.toolCallId !== void 0 && l4.toolCallId !== o6?.toolCallId) && u4.push(...f2()), c4 !== `tool`) {
+          if ((c3 !== `tool` || l4.toolCallId !== void 0 && l4.toolCallId !== o6?.toolCallId) && u4.push(...f2()), c3 !== `tool`) {
             if (l4.toolCallId === void 0) throw Error(`First TOOL_CALL_CHUNK must have a toolCallId`);
             if (l4.toolCallName === void 0) throw Error(`First TOOL_CALL_CHUNK must have a toolCallName`);
-            o6 = { toolCallId: l4.toolCallId, toolCallName: l4.toolCallName, parentMessageId: l4.parentMessageId }, c4 = `tool`;
+            o6 = { toolCallId: l4.toolCallId, toolCallName: l4.toolCallName, parentMessageId: l4.parentMessageId }, c3 = `tool`;
             let t6 = { type: EventType.TOOL_CALL_START, toolCallId: l4.toolCallId, toolCallName: l4.toolCallName, parentMessageId: l4.parentMessageId };
             u4.push(t6), r4 && console.debug(`[TRANSFORM]: TOOL_CALL_START`, JSON.stringify(t6));
           }
@@ -7620,9 +5204,9 @@ Error: ${n5}`);
           return u4;
         case EventType.REASONING_MESSAGE_CHUNK:
           let d3 = t5, p = [];
-          if ((c4 !== `reasoning` || d3.messageId && d3.messageId !== s5?.messageId) && p.push(...f2()), c4 !== `reasoning`) {
+          if ((c3 !== `reasoning` || d3.messageId && d3.messageId !== s5?.messageId) && p.push(...f2()), c3 !== `reasoning`) {
             if (d3.messageId === void 0) throw Error(`First REASONING_MESSAGE_CHUNK must have a messageId`);
-            s5 = { messageId: d3.messageId }, c4 = `reasoning`;
+            s5 = { messageId: d3.messageId }, c3 = `reasoning`;
             let t6 = { type: EventType.REASONING_MESSAGE_START, messageId: d3.messageId };
             p.push(t6), r4 && console.debug(`[TRANSFORM]: REASONING_MESSAGE_START`, JSON.stringify(t6));
           }
@@ -7643,11 +5227,11 @@ Error: ${n5}`);
     runNext(e2, t5) {
       return t5.run(e2).pipe(r3(false));
     }
-    runNextWithState(n5, a6) {
-      let o6 = t(n5.messages || []), s5 = t(n5.state || {}), c4 = new ReplaySubject();
-      return u(n5, c4, a6, []).subscribe((e2) => {
+    runNextWithState(n4, a6) {
+      let o6 = t(n4.messages || []), s5 = t(n4.state || {}), c3 = new ReplaySubject();
+      return u(n4, c3, a6, []).subscribe((e2) => {
         e2.messages !== void 0 && (o6 = e2.messages), e2.state !== void 0 && (s5 = e2.state);
-      }), this.runNext(n5, a6).pipe(concatMap(async (t5) => (c4.next(t5), await new Promise((e2) => setTimeout(e2, 0)), { event: t5, messages: t(o6), state: t(s5) })));
+      }), this.runNext(n4, a6).pipe(concatMap(async (t5) => (c3.next(t5), await new Promise((e2) => setTimeout(e2, 0)), { event: t5, messages: t(o6), state: t(s5) })));
     }
   };
   var o4 = class extends a4 {
@@ -7663,15 +5247,15 @@ Error: ${n5}`);
   function t4(e2) {
     let t5 = e2.content;
     if (Array.isArray(t5)) {
-      let n5 = t5.filter((e3) => typeof e3 == `object` && !!e3 && `type` in e3 && e3.type === `text` && typeof e3.text == `string`).map((e3) => e3.text).join(``);
-      return { ...e2, content: n5 };
+      let n4 = t5.filter((e3) => typeof e3 == `object` && !!e3 && `type` in e3 && e3.type === `text` && typeof e3.text == `string`).map((e3) => e3.text).join(``);
+      return { ...e2, content: n4 };
     }
     return typeof t5 == `string` ? e2 : { ...e2, content: `` };
   }
-  var n4 = class extends a4 {
-    run(e2, n5) {
+  var n3 = class extends a4 {
+    run(e2, n4) {
       let { parentRunId: r4, ...i4 } = e2, a6 = { ...i4, messages: i4.messages.map(t4) };
-      return this.runNext(a6, n5);
+      return this.runNext(a6, n4);
     }
   };
 
@@ -7680,7 +5264,7 @@ Error: ${n5}`);
   var a5 = `THINKING_END`;
   var o5 = `THINKING_TEXT_MESSAGE_START`;
   var s4 = `THINKING_TEXT_MESSAGE_CONTENT`;
-  var c3 = `THINKING_TEXT_MESSAGE_END`;
+  var c2 = `THINKING_TEXT_MESSAGE_END`;
   var l2 = class extends a4 {
     constructor(...e2) {
       super(...e2), this.currentReasoningId = null, this.currentMessageId = null;
@@ -7704,9 +5288,9 @@ Error: ${n5}`);
           let { delta: r4, ...i4 } = t5;
           return this.warnAboutTransformation(s4, EventType.REASONING_MESSAGE_CONTENT), { ...i4, type: EventType.REASONING_MESSAGE_CONTENT, messageId: this.currentMessageId ?? n(), delta: r4 };
         }
-        case c3: {
+        case c2: {
           let r4 = this.currentMessageId ?? n();
-          return this.warnAboutTransformation(c3, EventType.REASONING_MESSAGE_END), { ...t5, type: EventType.REASONING_MESSAGE_END, messageId: r4 };
+          return this.warnAboutTransformation(c2, EventType.REASONING_MESSAGE_END), { ...t5, type: EventType.REASONING_MESSAGE_END, messageId: r4 };
         }
         case a5: {
           let r4 = this.currentReasoningId ?? n();
@@ -7736,8 +5320,8 @@ Error: ${n5}`);
   };
   var isWildcard = (s5) => s5 === "*" || s5 === "x" || s5 === "X";
   var tryParse = (v) => {
-    const n5 = parseInt(v, 10);
-    return isNaN(n5) ? v : n5;
+    const n4 = parseInt(v, 10);
+    return isNaN(n4) ? v : n4;
   };
   var forceType = (a6, b) => typeof a6 !== typeof b ? [String(a6), String(b)] : [a6, b];
   var compareStrings = (a6, b) => {
@@ -7781,8 +5365,8 @@ Error: ${n5}`);
     get maxVersion() {
       return e;
     }
-    constructor({ agentId: t5, description: n5, threadId: r4, initialMessages: i4, initialState: a6, debug: o6 } = {}) {
-      this.debug = false, this.subscribers = [], this.isRunning = false, this.middlewares = [], this.agentId = t5, this.description = n5 ?? ``, this.threadId = r4 ?? v4_default(), this.messages = t(i4 ?? []), this.state = t(a6 ?? {}), this.debug = o6 ?? false, compareVersions(this.maxVersion, `0.0.39`) <= 0 && this.middlewares.unshift(new n4()), compareVersions(this.maxVersion, `0.0.45`) <= 0 && this.middlewares.unshift(new l2());
+    constructor({ agentId: t5, description: n4, threadId: r4, initialMessages: i4, initialState: a6, debug: o6 } = {}) {
+      this.debug = false, this.subscribers = [], this.isRunning = false, this.middlewares = [], this.agentId = t5, this.description = n4 ?? ``, this.threadId = r4 ?? v4_default(), this.messages = t(i4 ?? []), this.state = t(a6 ?? {}), this.debug = o6 ?? false, compareVersions(this.maxVersion, `0.0.39`) <= 0 && this.middlewares.unshift(new n3()), compareVersions(this.maxVersion, `0.0.45`) <= 0 && this.middlewares.unshift(new l2());
     }
     subscribe(e2) {
       return this.subscribers.push(e2), { unsubscribe: () => {
@@ -7793,18 +5377,18 @@ Error: ${n5}`);
       let t5 = e2.map((e3) => typeof e3 == `function` ? new o4(e3) : e3);
       return this.middlewares.push(...t5), this;
     }
-    async runAgent(t5, n5) {
+    async runAgent(t5, n4) {
       try {
         this.isRunning = true, this.agentId = this.agentId ?? v4_default();
-        let i4 = this.prepareRunAgentInput(t5), o6, s5 = new Set(this.messages.map((e2) => e2.id)), c4 = [{ onRunFinishedEvent: (e2) => {
+        let i4 = this.prepareRunAgentInput(t5), o6, s5 = new Set(this.messages.map((e2) => e2.id)), c3 = [{ onRunFinishedEvent: (e2) => {
           o6 = e2.result;
-        } }, ...this.subscribers, n5 ?? {}];
-        await this.onInitialize(i4, c4), this.activeRunDetach$ = new Subject();
+        } }, ...this.subscribers, n4 ?? {}];
+        await this.onInitialize(i4, c3), this.activeRunDetach$ = new Subject();
         let l3;
         this.activeRunCompletionPromise = new Promise((e2) => {
           l3 = e2;
-        }), await lastValueFrom(pipe(() => this.middlewares.length === 0 ? this.run(i4) : this.middlewares.reduceRight((e2, t6) => ({ run: (n6) => t6.run(n6, e2) }), this).run(i4), r3(this.debug), a(this.debug), (e2) => e2.pipe(takeUntil(this.activeRunDetach$)), (e2) => this.apply(i4, e2, c4), (e2) => this.processApplyEvents(i4, e2, c4), catchError((e2) => (this.isRunning = false, this.onError(i4, e2, c4))), finalize2(() => {
-          this.isRunning = false, this.onFinalize(i4, c4), l3?.(), l3 = void 0, this.activeRunCompletionPromise = void 0, this.activeRunDetach$ = void 0;
+        }), await lastValueFrom(pipe(() => this.middlewares.length === 0 ? this.run(i4) : this.middlewares.reduceRight((e2, t6) => ({ run: (n5) => t6.run(n5, e2) }), this).run(i4), r3(this.debug), a(this.debug), (e2) => e2.pipe(takeUntil(this.activeRunDetach$)), (e2) => this.apply(i4, e2, c3), (e2) => this.processApplyEvents(i4, e2, c3), catchError((e2) => (this.isRunning = false, this.onError(i4, e2, c3))), finalize2(() => {
+          this.isRunning = false, this.onFinalize(i4, c3), l3?.(), l3 = void 0, this.activeRunCompletionPromise = void 0, this.activeRunDetach$ = void 0;
         }))(of(null)));
         let d2 = t(this.messages).filter((e2) => !s5.has(e2.id));
         return { result: o6, newMessages: d2 };
@@ -7815,18 +5399,18 @@ Error: ${n5}`);
     connect(e2) {
       throw new AGUIConnectNotImplementedError();
     }
-    async connectAgent(t5, n5) {
+    async connectAgent(t5, n4) {
       try {
         this.isRunning = true, this.agentId = this.agentId ?? v4_default();
-        let i4 = this.prepareRunAgentInput(t5), o6, s5 = new Set(this.messages.map((e2) => e2.id)), c4 = [{ onRunFinishedEvent: (e2) => {
+        let i4 = this.prepareRunAgentInput(t5), o6, s5 = new Set(this.messages.map((e2) => e2.id)), c3 = [{ onRunFinishedEvent: (e2) => {
           o6 = e2.result;
-        } }, ...this.subscribers, n5 ?? {}];
-        await this.onInitialize(i4, c4), this.activeRunDetach$ = new Subject();
+        } }, ...this.subscribers, n4 ?? {}];
+        await this.onInitialize(i4, c3), this.activeRunDetach$ = new Subject();
         let l3;
         this.activeRunCompletionPromise = new Promise((e2) => {
           l3 = e2;
-        }), await lastValueFrom(pipe(() => this.connect(i4), r3(this.debug), a(this.debug), (e2) => e2.pipe(takeUntil(this.activeRunDetach$)), (e2) => this.apply(i4, e2, c4), (e2) => this.processApplyEvents(i4, e2, c4), catchError((e2) => (this.isRunning = false, e2 instanceof AGUIConnectNotImplementedError ? EMPTY : this.onError(i4, e2, c4))), finalize2(() => {
-          this.isRunning = false, this.onFinalize(i4, c4), l3?.(), l3 = void 0, this.activeRunCompletionPromise = void 0, this.activeRunDetach$ = void 0;
+        }), await lastValueFrom(pipe(() => this.connect(i4), r3(this.debug), a(this.debug), (e2) => e2.pipe(takeUntil(this.activeRunDetach$)), (e2) => this.apply(i4, e2, c3), (e2) => this.processApplyEvents(i4, e2, c3), catchError((e2) => (this.isRunning = false, e2 instanceof AGUIConnectNotImplementedError ? EMPTY : this.onError(i4, e2, c3))), finalize2(() => {
+          this.isRunning = false, this.onFinalize(i4, c3), l3?.(), l3 = void 0, this.activeRunCompletionPromise = void 0, this.activeRunDetach$ = void 0;
         }))(of(null)));
         let m = t(this.messages).filter((e2) => !s5.has(e2.id));
         return { result: o6, newMessages: m };
@@ -7844,43 +5428,43 @@ Error: ${n5}`);
     apply(e2, t5, r4) {
       return u(e2, t5, this, r4);
     }
-    processApplyEvents(e2, t5, n5) {
+    processApplyEvents(e2, t5, n4) {
       return t5.pipe(tap((t6) => {
-        t6.messages && (this.messages = t6.messages, n5.forEach((t7) => {
+        t6.messages && (this.messages = t6.messages, n4.forEach((t7) => {
           t7.onMessagesChanged?.({ messages: this.messages, state: this.state, agent: this, input: e2 });
-        })), t6.state && (this.state = t6.state, n5.forEach((t7) => {
+        })), t6.state && (this.state = t6.state, n4.forEach((t7) => {
           t7.onStateChanged?.({ state: this.state, messages: this.messages, agent: this, input: e2 });
         }));
       }));
     }
     prepareRunAgentInput(t5) {
-      let n5 = t(this.messages).filter((e2) => e2.role !== `activity`);
-      return { threadId: this.threadId, runId: t5?.runId || v4_default(), tools: t(t5?.tools ?? []), context: t(t5?.context ?? []), forwardedProps: t(t5?.forwardedProps ?? {}), state: t(this.state), messages: n5 };
+      let n4 = t(this.messages).filter((e2) => e2.role !== `activity`);
+      return { threadId: this.threadId, runId: t5?.runId || v4_default(), tools: t(t5?.tools ?? []), context: t(t5?.context ?? []), forwardedProps: t(t5?.forwardedProps ?? {}), state: t(this.state), messages: n4 };
     }
-    async onInitialize(e2, n5) {
-      let r4 = await t2(n5, this.messages, this.state, (t5, n6, r5) => t5.onRunInitialized?.({ messages: n6, state: r5, agent: this, input: e2 }));
-      (r4.messages !== void 0 || r4.state !== void 0) && (r4.messages && (this.messages = r4.messages, e2.messages = r4.messages, n5.forEach((t5) => {
+    async onInitialize(e2, n4) {
+      let r4 = await t2(n4, this.messages, this.state, (t5, n5, r5) => t5.onRunInitialized?.({ messages: n5, state: r5, agent: this, input: e2 }));
+      (r4.messages !== void 0 || r4.state !== void 0) && (r4.messages && (this.messages = r4.messages, e2.messages = r4.messages, n4.forEach((t5) => {
         t5.onMessagesChanged?.({ messages: this.messages, state: this.state, agent: this, input: e2 });
-      })), r4.state && (this.state = r4.state, e2.state = r4.state, n5.forEach((t5) => {
+      })), r4.state && (this.state = r4.state, e2.state = r4.state, n4.forEach((t5) => {
         t5.onStateChanged?.({ state: this.state, messages: this.messages, agent: this, input: e2 });
       })));
     }
-    onError(e2, n5, r4) {
-      return from(t2(r4, this.messages, this.state, (t5, r5, i4) => t5.onRunFailed?.({ error: n5, messages: r5, state: i4, agent: this, input: e2 }))).pipe(map((t5) => {
+    onError(e2, n4, r4) {
+      return from(t2(r4, this.messages, this.state, (t5, r5, i4) => t5.onRunFailed?.({ error: n4, messages: r5, state: i4, agent: this, input: e2 }))).pipe(map((t5) => {
         let i4 = t5;
         if ((i4.messages !== void 0 || i4.state !== void 0) && (i4.messages !== void 0 && (this.messages = i4.messages, r4.forEach((t6) => {
           t6.onMessagesChanged?.({ messages: this.messages, state: this.state, agent: this, input: e2 });
         })), i4.state !== void 0 && (this.state = i4.state, r4.forEach((t6) => {
           t6.onStateChanged?.({ state: this.state, messages: this.messages, agent: this, input: e2 });
-        }))), i4.stopPropagation !== true) throw console.error(`Agent execution failed:`, n5), n5;
+        }))), i4.stopPropagation !== true) throw console.error(`Agent execution failed:`, n4), n4;
         return {};
       }));
     }
-    async onFinalize(e2, n5) {
-      let r4 = await t2(n5, this.messages, this.state, (t5, n6, r5) => t5.onRunFinalized?.({ messages: n6, state: r5, agent: this, input: e2 }));
-      (r4.messages !== void 0 || r4.state !== void 0) && (r4.messages !== void 0 && (this.messages = r4.messages, n5.forEach((t5) => {
+    async onFinalize(e2, n4) {
+      let r4 = await t2(n4, this.messages, this.state, (t5, n5, r5) => t5.onRunFinalized?.({ messages: n5, state: r5, agent: this, input: e2 }));
+      (r4.messages !== void 0 || r4.state !== void 0) && (r4.messages !== void 0 && (this.messages = r4.messages, n4.forEach((t5) => {
         t5.onMessagesChanged?.({ messages: this.messages, state: this.state, agent: this, input: e2 });
-      })), r4.state !== void 0 && (this.state = r4.state, n5.forEach((t5) => {
+      })), r4.state !== void 0 && (this.state = r4.state, n4.forEach((t5) => {
         t5.onStateChanged?.({ state: this.state, messages: this.messages, agent: this, input: e2 });
       })));
     }
@@ -7917,11 +5501,11 @@ Error: ${n5}`);
     legacy_to_be_removed_runAgentBridged(e2) {
       this.agentId = this.agentId ?? v4_default();
       let t5 = this.prepareRunAgentInput(e2);
-      return (this.middlewares.length === 0 ? this.run(t5) : this.middlewares.reduceRight((e3, t6) => ({ run: (n5) => t6.run(n5, e3) }), this).run(t5)).pipe(r3(this.debug), a(this.debug), o3(this.threadId, t5.runId, this.agentId), (e3) => e3.pipe(map((e4) => (this.debug && console.debug(`[LEGACY]:`, JSON.stringify(e4)), e4))));
+      return (this.middlewares.length === 0 ? this.run(t5) : this.middlewares.reduceRight((e3, t6) => ({ run: (n4) => t6.run(n4, e3) }), this).run(t5)).pipe(r3(this.debug), a(this.debug), o3(this.threadId, t5.runId, this.agentId), (e3) => e3.pipe(map((e4) => (this.debug && console.debug(`[LEGACY]:`, JSON.stringify(e4)), e4))));
     }
   };
 
-  // ../../sdks/typescript/packages/client/dist/agent/http.mjs
+  // ../../sdks/typescript/packages/client/dist/agent/base-http.mjs
   var i3 = class extends w {
     requestInit(e2) {
       return { method: `POST`, headers: { ...this.headers, "Content-Type": `application/json`, Accept: `text/event-stream` }, body: JSON.stringify(e2), signal: this.abortController.signal };
@@ -7933,16 +5517,17 @@ Error: ${n5}`);
       this.abortController.abort(), super.abortRun();
     }
     constructor(t5) {
-      super(t5), this.abortController = new AbortController(), this.url = t5.url, this.headers = t(t5.headers ?? {});
+      super(t5), this.abortController = new AbortController(), this.httpEventStreamHandlers = [], this.url = t5.url, this.headers = t(t5.headers ?? {}), this.httpEventStreamHandlers = t5.streamHandlers ?? [];
     }
     run(e2) {
-      return c(s(this.url, this.requestInit(e2)));
+      let r4 = s(this.url, this.requestInit(e2));
+      return r(this.httpEventStreamHandlers)(r4);
     }
     clone() {
       let t5 = super.clone();
       t5.url = this.url, t5.headers = t(this.headers ?? {});
-      let n5 = new AbortController(), r4 = this.abortController.signal;
-      return r4.aborted && n5.abort(r4.reason), t5.abortController = n5, t5;
+      let n4 = new AbortController(), r4 = this.abortController.signal;
+      return r4.aborted && n4.abort(r4.reason), t5.abortController = n4, t5;
     }
   };
 

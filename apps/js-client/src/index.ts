@@ -1,9 +1,9 @@
-import { HttpAgent, type RunAgentInput } from '@ag-ui/client';
+import { BaseHttpAgent, type RunAgentInput } from '@ag-ui/client';
 
 /**
  * Custom HTTP Agent for answer requests
  */
-export class AnswerAgent extends HttpAgent {
+export class AnswerAgent extends BaseHttpAgent {
     protected requestInit(input: RunAgentInput): RequestInit {
         const { params, accessToken } = input.forwardedProps || {};
         return {

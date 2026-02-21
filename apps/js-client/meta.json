@@ -7586,12 +7586,17 @@
       "format": "esm"
     },
     "../../sdks/typescript/packages/client/dist/transform/sse.mjs": {
-      "bytes": 677,
+      "bytes": 1042,
       "imports": [
         {
           "path": "../../sdks/typescript/packages/client/dist/run/http-request.mjs",
           "kind": "import-statement",
           "original": "../run/http-request.mjs"
+        },
+        {
+          "path": "../../sdks/typescript/packages/core/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@ag-ui/core"
         },
         {
           "path": "../../node_modules/.pnpm/rxjs@7.8.1/node_modules/rxjs/dist/esm5/index.js",
@@ -8051,7 +8056,7 @@
       "format": "esm"
     },
     "../../sdks/typescript/packages/client/dist/transform/proto.mjs": {
-      "bytes": 857,
+      "bytes": 982,
       "imports": [
         {
           "path": "../../sdks/typescript/packages/client/dist/run/http-request.mjs",
@@ -8071,8 +8076,8 @@
       ],
       "format": "esm"
     },
-    "../../sdks/typescript/packages/client/dist/transform/http.mjs": {
-      "bytes": 1013,
+    "../../sdks/typescript/packages/client/dist/transform/factory.mjs": {
+      "bytes": 581,
       "imports": [
         {
           "path": "../../sdks/typescript/packages/client/dist/run/http-request.mjs",
@@ -8080,24 +8085,30 @@
           "original": "../run/http-request.mjs"
         },
         {
+          "path": "../../node_modules/.pnpm/rxjs@7.8.1/node_modules/rxjs/dist/esm5/index.js",
+          "kind": "import-statement",
+          "original": "rxjs"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../sdks/typescript/packages/client/dist/transform/http.mjs": {
+      "bytes": 392,
+      "imports": [
+        {
           "path": "../../sdks/typescript/packages/client/dist/transform/sse.mjs",
           "kind": "import-statement",
           "original": "./sse.mjs"
         },
         {
+          "path": "../../sdks/typescript/packages/client/dist/transform/factory.mjs",
+          "kind": "import-statement",
+          "original": "./factory.mjs"
+        },
+        {
           "path": "../../sdks/typescript/packages/client/dist/transform/proto.mjs",
           "kind": "import-statement",
           "original": "./proto.mjs"
-        },
-        {
-          "path": "../../sdks/typescript/packages/core/dist/index.mjs",
-          "kind": "import-statement",
-          "original": "@ag-ui/core"
-        },
-        {
-          "path": "../../node_modules/.pnpm/rxjs@7.8.1/node_modules/rxjs/dist/esm5/index.js",
-          "kind": "import-statement",
-          "original": "rxjs"
         },
         {
           "path": "../../sdks/typescript/packages/proto/dist/index.mjs",
@@ -8420,8 +8431,8 @@
       ],
       "format": "esm"
     },
-    "../../sdks/typescript/packages/client/dist/agent/http.mjs": {
-      "bytes": 982,
+    "../../sdks/typescript/packages/client/dist/agent/base-http.mjs": {
+      "bytes": 1121,
       "imports": [
         {
           "path": "../../sdks/typescript/packages/client/dist/utils.mjs",
@@ -8434,14 +8445,51 @@
           "original": "../run/http-request.mjs"
         },
         {
-          "path": "../../sdks/typescript/packages/client/dist/transform/http.mjs",
+          "path": "../../sdks/typescript/packages/client/dist/transform/factory.mjs",
           "kind": "import-statement",
-          "original": "../transform/http.mjs"
+          "original": "../transform/factory.mjs"
         },
         {
           "path": "../../sdks/typescript/packages/client/dist/agent/agent.mjs",
           "kind": "import-statement",
           "original": "./agent.mjs"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../sdks/typescript/packages/encoder/dist/index.mjs": {
+      "bytes": 5752,
+      "imports": [
+        {
+          "path": "../../sdks/typescript/packages/proto/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@ag-ui/proto"
+        }
+      ],
+      "format": "esm"
+    },
+    "../../sdks/typescript/packages/client/dist/agent/full-http.mjs": {
+      "bytes": 495,
+      "imports": [
+        {
+          "path": "../../sdks/typescript/packages/client/dist/transform/sse.mjs",
+          "kind": "import-statement",
+          "original": "../transform/sse.mjs"
+        },
+        {
+          "path": "../../sdks/typescript/packages/client/dist/transform/proto.mjs",
+          "kind": "import-statement",
+          "original": "../transform/proto.mjs"
+        },
+        {
+          "path": "../../sdks/typescript/packages/client/dist/agent/base-http.mjs",
+          "kind": "import-statement",
+          "original": "./base-http.mjs"
+        },
+        {
+          "path": "../../sdks/typescript/packages/encoder/dist/index.mjs",
+          "kind": "import-statement",
+          "original": "@ag-ui/encoder"
         }
       ],
       "format": "esm"
@@ -8458,7 +8506,7 @@
       "format": "esm"
     },
     "../../sdks/typescript/packages/client/dist/index.mjs": {
-      "bytes": 1461,
+      "bytes": 1539,
       "imports": [
         {
           "path": "../../sdks/typescript/packages/client/dist/utils.mjs",
@@ -8531,9 +8579,14 @@
           "original": "./agent/agent.mjs"
         },
         {
-          "path": "../../sdks/typescript/packages/client/dist/agent/http.mjs",
+          "path": "../../sdks/typescript/packages/client/dist/agent/base-http.mjs",
           "kind": "import-statement",
-          "original": "./agent/http.mjs"
+          "original": "./agent/base-http.mjs"
+        },
+        {
+          "path": "../../sdks/typescript/packages/client/dist/agent/full-http.mjs",
+          "kind": "import-statement",
+          "original": "./agent/full-http.mjs"
         },
         {
           "path": "../../sdks/typescript/packages/client/dist/compact/compact.mjs",
@@ -8549,7 +8602,7 @@
       "format": "esm"
     },
     "src/index.ts": {
-      "bytes": 803,
+      "bytes": 811,
       "imports": [
         {
           "path": "../../sdks/typescript/packages/client/dist/index.mjs",
@@ -8857,47 +8910,11 @@
         "../../sdks/typescript/packages/client/dist/run/http-request.mjs": {
           "bytesInOutput": 1249
         },
-        "../../sdks/typescript/packages/client/dist/transform/sse.mjs": {
-          "bytesInOutput": 858
-        },
-        "../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/wire/varint.js": {
-          "bytesInOutput": 5046
-        },
-        "../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/proto-int64.js": {
-          "bytesInOutput": 3091
-        },
-        "../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/wire/text-encoding.js": {
-          "bytesInOutput": 646
-        },
-        "../../node_modules/.pnpm/@bufbuild+protobuf@2.11.0/node_modules/@bufbuild/protobuf/dist/esm/wire/binary-encoding.js": {
-          "bytesInOutput": 11923
-        },
-        "../../sdks/typescript/packages/proto/dist/generated/google/protobuf/struct.mjs": {
-          "bytesInOutput": 8664
-        },
-        "../../sdks/typescript/packages/proto/dist/generated/patch.mjs": {
-          "bytesInOutput": 2585
-        },
-        "../../sdks/typescript/packages/proto/dist/generated/types.mjs": {
-          "bytesInOutput": 5782
-        },
-        "../../sdks/typescript/packages/proto/dist/generated/events.mjs": {
-          "bytesInOutput": 44865
-        },
-        "../../sdks/typescript/packages/proto/dist/proto.mjs": {
-          "bytesInOutput": 1017
-        },
-        "../../sdks/typescript/packages/proto/dist/index.mjs": {
-          "bytesInOutput": 61
-        },
-        "../../sdks/typescript/packages/client/dist/transform/proto.mjs": {
-          "bytesInOutput": 1062
-        },
-        "../../sdks/typescript/packages/client/dist/transform/http.mjs": {
-          "bytesInOutput": 1038
+        "../../sdks/typescript/packages/client/dist/transform/factory.mjs": {
+          "bytesInOutput": 606
         },
         "../../sdks/typescript/packages/client/dist/legacy/types.mjs": {
-          "bytesInOutput": 2042
+          "bytesInOutput": 2040
         },
         "../../sdks/typescript/packages/client/dist/legacy/convert.mjs": {
           "bytesInOutput": 6223
@@ -8929,8 +8946,8 @@
         "../../sdks/typescript/packages/client/dist/agent/agent.mjs": {
           "bytesInOutput": 9148
         },
-        "../../sdks/typescript/packages/client/dist/agent/http.mjs": {
-          "bytesInOutput": 942
+        "../../sdks/typescript/packages/client/dist/agent/base-http.mjs": {
+          "bytesInOutput": 1082
         },
         "../../sdks/typescript/packages/client/dist/index.mjs": {
           "bytesInOutput": 0
@@ -8939,7 +8956,7 @@
           "bytesInOutput": 553
         }
       },
-      "bytes": 296220
+      "bytes": 209324
     }
   }
 }
