@@ -224,17 +224,9 @@ describe("MCPAppsMiddleware", () => {
       const middleware = new MCPAppsMiddleware();
       const agent = new MockAgent([createRunStartedEvent(), createRunFinishedEvent()]);
 
-      let completed = false;
-      await new Promise<void>((resolve) => {
-        middleware.run(createRunAgentInput(), agent).subscribe({
-          complete: () => {
-            completed = true;
-            resolve();
-          },
-        });
-      });
+      const events = await collectEvents(middleware.run(createRunAgentInput(), agent));
 
-      expect(completed).toBe(true);
+      expect(events.length).toBeGreaterThanOrEqual(1);
     });
 
     it("error propagation works with no servers", async () => {
@@ -243,15 +235,11 @@ describe("MCPAppsMiddleware", () => {
       const agent = new ErrorMockAgent(testError);
 
       let caughtError: Error | null = null;
-      await new Promise<void>((resolve) => {
-        middleware.run(createRunAgentInput(), agent).subscribe({
-          error: (err) => {
-            caughtError = err;
-            resolve();
-          },
-          complete: () => resolve(),
-        });
-      });
+      try {
+        await collectEvents(middleware.run(createRunAgentInput(), agent));
+      } catch (err) {
+        caughtError = err as Error;
+      }
 
       expect(caughtError).toBe(testError);
     });
@@ -556,13 +544,7 @@ describe("MCPAppsMiddleware", () => {
         createRunFinishedEvent(),
       ]);
 
-      const receivedEvents: BaseEvent[] = [];
-      await new Promise<void>((resolve) => {
-        middleware.run(createRunAgentInput(), agent).subscribe({
-          next: (event) => receivedEvents.push(event),
-          complete: () => resolve(),
-        });
-      });
+      const receivedEvents = await collectEvents(middleware.run(createRunAgentInput(), agent));
 
       // First event should be RUN_STARTED
       expect(receivedEvents[0].type).toBe(EventType.RUN_STARTED);
@@ -576,21 +558,9 @@ describe("MCPAppsMiddleware", () => {
       const middleware = new MCPAppsMiddleware({ mcpServers: [httpServerConfig] });
       const agent = new AsyncMockAgent([createRunStartedEvent(), createRunFinishedEvent()], 10);
 
-      const receivedEvents: BaseEvent[] = [];
-      let finishedReceived = false;
+      const receivedEvents = await collectEvents(middleware.run(createRunAgentInput(), agent));
 
-      await new Promise<void>((resolve) => {
-        middleware.run(createRunAgentInput(), agent).subscribe({
-          next: (event) => {
-            receivedEvents.push(event);
-            if (event.type === EventType.RUN_FINISHED) {
-              finishedReceived = true;
-            }
-          },
-          complete: () => resolve(),
-        });
-      });
-
+      const finishedReceived = receivedEvents.some((e) => e.type === EventType.RUN_FINISHED);
       expect(finishedReceived).toBe(true);
       expect(receivedEvents[receivedEvents.length - 1].type).toBe(EventType.RUN_FINISHED);
     });
@@ -603,15 +573,11 @@ describe("MCPAppsMiddleware", () => {
       const agent = new ErrorMockAgent(testError);
 
       let caughtError: Error | null = null;
-      await new Promise<void>((resolve) => {
-        middleware.run(createRunAgentInput(), agent).subscribe({
-          error: (err) => {
-            caughtError = err;
-            resolve();
-          },
-          complete: () => resolve(),
-        });
-      });
+      try {
+        await collectEvents(middleware.run(createRunAgentInput(), agent));
+      } catch (err) {
+        caughtError = err as Error;
+      }
 
       expect(caughtError).toBe(testError);
     });
@@ -631,17 +597,13 @@ describe("MCPAppsMiddleware", () => {
       );
 
       let eventCount = 0;
-      const subscription = middleware.run(createRunAgentInput(), agent).subscribe({
-        next: () => {
-          eventCount++;
-          if (eventCount === 2) {
-            subscription.unsubscribe();
-          }
-        },
-      });
-
-      // Wait a bit to ensure no more events are received after unsubscribe
-      await new Promise((resolve) => setTimeout(resolve, 200));
+      const iterable = middleware.run(createRunAgentInput(), agent);
+      for await (const _event of iterable) {
+        eventCount++;
+        if (eventCount === 2) {
+          break;
+        }
+      }
 
       expect(eventCount).toBe(2);
     });
