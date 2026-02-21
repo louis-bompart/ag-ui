@@ -1,4 +1,3 @@
-import { Observable, Subject } from "rxjs";
 import { AbstractAgent } from "../agent";
 import {
   BaseEvent,
@@ -17,6 +16,7 @@ import {
   Message,
   AssistantMessage,
 } from "@ag-ui/core";
+import { ofAsync } from "@/async-utils";
 
 // Mock agent implementation for testing concurrent events
 class ConcurrentTestAgent extends AbstractAgent {
@@ -34,14 +34,11 @@ class ConcurrentTestAgent extends AbstractAgent {
     this.currentEventIndex = 0;
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable((subscriber) => {
-      // Emit all the pre-configured events
-      for (const event of this.eventsToEmit) {
-        subscriber.next(event);
-      }
-      subscriber.complete();
-    });
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    // Emit all the pre-configured events
+    for (const event of this.eventsToEmit) {
+      yield event;
+    }
   }
 }
 

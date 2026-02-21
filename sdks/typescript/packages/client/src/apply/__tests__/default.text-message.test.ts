@@ -1,6 +1,4 @@
-import { Subject } from "rxjs";
-import { toArray } from "rxjs/operators";
-import { firstValueFrom } from "rxjs";
+import { AsyncChannel, collectAsync } from "@/async-utils";
 import {
   BaseEvent,
   EventType,
@@ -26,8 +24,7 @@ const createAgent = (messages: Message[] = []) =>
 
 describe("defaultApplyEvents with text messages", () => {
   it("should handle text message events correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -37,42 +34,34 @@ describe("defaultApplyEvents with text messages", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
-    // Send events
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "msg1",
       role: "assistant",
     } as TextMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "Hello ",
     } as TextMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "world!",
     } as TextMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "msg1",
     } as TextMessageEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // We should have exactly 3 state updates:
@@ -100,8 +89,7 @@ describe("defaultApplyEvents with text messages", () => {
   });
 
   it("should handle multiple text messages correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -111,58 +99,48 @@ describe("defaultApplyEvents with text messages", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events for two different messages
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // First message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "msg1",
       role: "assistant",
     } as TextMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "First message",
     } as TextMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "msg1",
     } as TextMessageEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
-
     // Second message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "msg2",
       role: "user",
     } as unknown as TextMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg2",
       delta: "Second message",
     } as TextMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "msg2",
     } as TextMessageEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // We should have exactly 4 state updates:
@@ -201,12 +179,7 @@ describe("defaultApplyEvents with text messages", () => {
   });
 
   it("should not create duplicate message when TEXT_MESSAGE_START uses same ID as TOOL_CALL_START parentMessageId", async () => {
-    // This tests the scenario where:
-    // 1. TOOL_CALL_START creates a message with parentMessageId "msg1"
-    // 2. TEXT_MESSAGE_START comes with messageId "msg1" (same ID)
-    // The fix ensures TEXT_MESSAGE_START doesn't create a duplicate message
-
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -217,36 +190,36 @@ describe("defaultApplyEvents with text messages", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     const sharedMessageId = "d0b45a7f-d877-4a59-a6db-e11365066393";
 
     // Send events mimicking the real-world scenario
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Tool call with parentMessageId creates a message with that ID
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "call_123",
       toolCallName: "updateWorkingMemory",
       parentMessageId: sharedMessageId,
     } as ToolCallStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "call_123",
       delta: '{"memory":{}}',
     } as ToolCallArgsEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "call_123",
     } as ToolCallEndEvent);
 
     // Tool result (separate message)
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_RESULT,
       messageId: "tool-result-1",
       toolCallId: "call_123",
@@ -256,25 +229,24 @@ describe("defaultApplyEvents with text messages", () => {
 
     // Text message with SAME messageId as the tool call's parentMessageId
     // This should NOT create a duplicate message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: sharedMessageId,
       role: "assistant",
     } as TextMessageStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: sharedMessageId,
       delta: "Here is the response",
     } as TextMessageContentEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: sharedMessageId,
     } as TextMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 

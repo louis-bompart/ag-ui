@@ -1,6 +1,4 @@
-import { Subject } from "rxjs";
-import { toArray } from "rxjs/operators";
-import { firstValueFrom } from "rxjs";
+import { AsyncChannel, collectAsync } from "@/async-utils";
 import { defaultApplyEvents } from "../default";
 import {
   BaseEvent,
@@ -29,8 +27,7 @@ const createAgent = (messages: Message[] = []) =>
 describe("defaultApplyEvents concurrent operations", () => {
   // Test: Concurrent text messages should create separate messages
   it("should handle concurrent text messages correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -40,57 +37,53 @@ describe("defaultApplyEvents concurrent operations", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events for concurrent text messages
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Start two concurrent text messages
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "msg1",
       role: "assistant",
     } as TextMessageStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "msg2",
       role: "assistant",
     } as TextMessageStartEvent);
 
     // Send content for both messages
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "First message content",
     } as TextMessageContentEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg2",
       delta: "Second message content",
     } as TextMessageContentEvent);
 
     // End messages in reverse order
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "msg2",
     } as TextMessageEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "msg1",
     } as TextMessageEndEvent);
 
-    // Complete the events stream
-    events$.complete();
+    channel.close();
 
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Verify we have the expected number of state updates
@@ -114,8 +107,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
   // Test: Concurrent tool calls should create separate tool calls
   it("should handle concurrent tool calls correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -125,25 +117,23 @@ describe("defaultApplyEvents concurrent operations", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events for concurrent tool calls
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Start two concurrent tool calls
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
       parentMessageId: "msg1",
     } as ToolCallStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool2",
       toolCallName: "calculate",
@@ -151,33 +141,31 @@ describe("defaultApplyEvents concurrent operations", () => {
     } as ToolCallStartEvent);
 
     // Send args for both tool calls
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query":"test search"}',
     } as ToolCallArgsEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool2",
       delta: '{"expression":"1+1"}',
     } as ToolCallArgsEvent);
 
     // End tool calls in reverse order
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool2",
     } as ToolCallEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
-    // Complete the events stream
-    events$.complete();
+    channel.close();
 
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Verify we have the expected number of state updates
@@ -208,8 +196,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
   // Test: Mixed concurrent messages and tool calls
   it("should handle mixed concurrent text messages and tool calls", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -219,25 +206,23 @@ describe("defaultApplyEvents concurrent operations", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send mixed concurrent events
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Start a text message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "thinking_msg",
       role: "assistant",
     } as TextMessageStartEvent);
 
     // Start a tool call while message is active
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "search_tool",
       toolCallName: "web_search",
@@ -245,52 +230,50 @@ describe("defaultApplyEvents concurrent operations", () => {
     } as ToolCallStartEvent);
 
     // Add content to text message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "thinking_msg",
       delta: "Let me search for that information...",
     } as TextMessageContentEvent);
 
     // Add args to tool call
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "search_tool",
       delta: '{"query":"concurrent events"}',
     } as ToolCallArgsEvent);
 
     // Start another text message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "status_msg",
       role: "assistant",
     } as TextMessageStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "status_msg",
       delta: "Processing your request...",
     } as TextMessageContentEvent);
 
     // End everything in mixed order
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "thinking_msg",
     } as TextMessageEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "search_tool",
     } as ToolCallEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "status_msg",
     } as TextMessageEndEvent);
 
-    // Complete the events stream
-    events$.complete();
+    channel.close();
 
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Check final state
@@ -314,8 +297,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
   // Test: Multiple tool calls on the same message
   it("should handle multiple tool calls on the same parent message", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
 
     // Create initial state with an existing message
     const parentMessageId = "parent_msg";
@@ -335,32 +317,30 @@ describe("defaultApplyEvents concurrent operations", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events for multiple tool calls on the same message
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Start multiple tool calls concurrently with the same parent message
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
       parentMessageId: parentMessageId,
     } as ToolCallStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool2",
       toolCallName: "calculate",
       parentMessageId: parentMessageId,
     } as ToolCallStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool3",
       toolCallName: "format",
@@ -368,44 +348,42 @@ describe("defaultApplyEvents concurrent operations", () => {
     } as ToolCallStartEvent);
 
     // Send args for all tool calls
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query":"test"}',
     } as ToolCallArgsEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool2",
       delta: '{"expression":"2*3"}',
     } as ToolCallArgsEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool3",
       delta: '{"format":"json"}',
     } as ToolCallArgsEvent);
 
     // End all tool calls
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool2",
     } as ToolCallEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool3",
     } as ToolCallEndEvent);
 
-    // Complete the events stream
-    events$.complete();
+    channel.close();
 
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Check final state - should still have only one message with 3 tool calls
@@ -436,8 +414,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
   // Test: High-frequency concurrent events
   it("should handle high-frequency concurrent events", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -447,14 +424,12 @@ describe("defaultApplyEvents concurrent operations", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Create many concurrent messages and tool calls
     const numMessages = 10;
@@ -462,7 +437,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
     // Start all messages
     for (let i = 0; i < numMessages; i++) {
-      events$.next({
+      channel.push({
         type: EventType.TEXT_MESSAGE_START,
         messageId: `msg${i}`,
         role: "assistant",
@@ -471,7 +446,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
     // Start all tool calls
     for (let i = 0; i < numToolCalls; i++) {
-      events$.next({
+      channel.push({
         type: EventType.TOOL_CALL_START,
         toolCallId: `tool${i}`,
         toolCallName: `tool_${i}`,
@@ -481,7 +456,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
     // Send content for all messages
     for (let i = 0; i < numMessages; i++) {
-      events$.next({
+      channel.push({
         type: EventType.TEXT_MESSAGE_CONTENT,
         messageId: `msg${i}`,
         delta: `Content for message ${i}`,
@@ -490,7 +465,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
     // Send args for all tool calls
     for (let i = 0; i < numToolCalls; i++) {
-      events$.next({
+      channel.push({
         type: EventType.TOOL_CALL_ARGS,
         toolCallId: `tool${i}`,
         delta: `{"param${i}":"value${i}"}`,
@@ -499,23 +474,21 @@ describe("defaultApplyEvents concurrent operations", () => {
 
     // End all in reverse order
     for (let i = numMessages - 1; i >= 0; i--) {
-      events$.next({
+      channel.push({
         type: EventType.TEXT_MESSAGE_END,
         messageId: `msg${i}`,
       } as TextMessageEndEvent);
     }
 
     for (let i = numToolCalls - 1; i >= 0; i--) {
-      events$.next({
+      channel.push({
         type: EventType.TOOL_CALL_END,
         toolCallId: `tool${i}`,
       } as ToolCallEndEvent);
     }
 
-    // Complete the events stream
-    events$.complete();
+    channel.close();
 
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Check final state
@@ -545,8 +518,7 @@ describe("defaultApplyEvents concurrent operations", () => {
 
   // Test: Interleaved content and args updates
   it("should handle interleaved content and args updates correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -556,23 +528,21 @@ describe("defaultApplyEvents concurrent operations", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Start concurrent message and tool call
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "msg1",
       role: "assistant",
     } as TextMessageStartEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
@@ -580,57 +550,55 @@ describe("defaultApplyEvents concurrent operations", () => {
     } as ToolCallStartEvent);
 
     // Interleave content and args updates
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "Searching ",
     } as TextMessageContentEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"que',
     } as ToolCallArgsEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "for ",
     } as TextMessageContentEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: 'ry":"',
     } as ToolCallArgsEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "msg1",
       delta: "information...",
     } as TextMessageContentEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: 'test"}',
     } as ToolCallArgsEvent);
 
     // End both
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "msg1",
     } as TextMessageEndEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
-    // Complete the events stream
-    events$.complete();
+    channel.close();
 
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Check final state

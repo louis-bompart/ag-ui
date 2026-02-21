@@ -8,7 +8,6 @@ import {
   RunFinishedEvent,
   RunStartedEvent,
 } from "@ag-ui/client";
-import { Observable } from "rxjs";
 import { A2AClient } from "@a2a-js/sdk/client";
 import type {
   MessageSendConfiguration,
@@ -18,7 +17,6 @@ import type {
 } from "@a2a-js/sdk";
 import { convertAGUIMessagesToA2A, convertA2AEventToAGUIEvents } from "./utils";
 import type {
-  A2AAgentRunResultSummary,
   ConvertedA2AMessages,
   A2AStreamEvent,
   SurfaceTracker,
@@ -52,77 +50,65 @@ export class A2AAgent extends AbstractAgent {
     return new A2AAgent({ a2aClient: this.a2aClient, debug: this.debug });
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable<BaseEvent>((subscriber) => {
-      const run = async () => {
-        const runStarted: RunStartedEvent = {
-          type: EventType.RUN_STARTED,
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    const runStarted: RunStartedEvent = {
+      type: EventType.RUN_STARTED,
+      threadId: input.threadId,
+      runId: input.runId,
+    };
+    yield runStarted;
+
+    if (!input.messages?.length) {
+      const runFinished: RunFinishedEvent = {
+        type: EventType.RUN_FINISHED,
+        threadId: input.threadId,
+        runId: input.runId,
+      };
+      yield runFinished;
+      return;
+    }
+
+    try {
+      const converted = this.prepareConversation(input);
+
+      if (!converted.latestUserMessage) {
+        const runFinished: RunFinishedEvent = {
+          type: EventType.RUN_FINISHED,
           threadId: input.threadId,
           runId: input.runId,
-        };
-        subscriber.next(runStarted);
+        } as unknown as RunFinishedEvent;
+        yield runFinished;
+        return;
+      }
 
-        if (!input.messages?.length) {
-          const runFinished: RunFinishedEvent = {
-            type: EventType.RUN_FINISHED,
-            threadId: input.threadId,
-            runId: input.runId,
-          };
-          subscriber.next(runFinished);
-          subscriber.complete();
-          return;
-        }
+      const sendParams = await this.createSendParams(converted, input);
 
-        try {
-          const converted = this.prepareConversation(input);
+      const surfaceTracker = this.createSurfaceTracker();
 
-          if (!converted.latestUserMessage) {
-            const runFinished: RunFinishedEvent = {
-              type: EventType.RUN_FINISHED,
-              threadId: input.threadId,
-              runId: input.runId,
-            } as unknown as RunFinishedEvent;
-            subscriber.next(runFinished);
-            subscriber.complete();
-            return;
-          }
+      try {
+        yield* this.streamMessage(sendParams, surfaceTracker);
+      } catch (error) {
+        yield* this.fallbackToBlocking(
+          sendParams,
+          error as Error,
+          surfaceTracker,
+        );
+      }
 
-          const sendParams = await this.createSendParams(converted, input);
-
-          const surfaceTracker = this.createSurfaceTracker();
-
-          try {
-            await this.streamMessage(sendParams, subscriber, surfaceTracker);
-          } catch (error) {
-            await this.fallbackToBlocking(
-              sendParams,
-              subscriber,
-              error as Error,
-              surfaceTracker,
-            );
-          }
-
-          const runFinished: RunFinishedEvent = {
-            type: EventType.RUN_FINISHED,
-            threadId: input.threadId,
-            runId: input.runId,
-          };
-          subscriber.next(runFinished);
-          subscriber.complete();
-        } catch (error) {
-          const runError: RunErrorEvent = {
-            type: EventType.RUN_ERROR,
-            message: (error as Error).message ?? "Unknown A2A error",
-          };
-          subscriber.next(runError);
-          subscriber.error(error);
-        }
+      const runFinished: RunFinishedEvent = {
+        type: EventType.RUN_FINISHED,
+        threadId: input.threadId,
+        runId: input.runId,
       };
-
-      run();
-
-      return () => {};
-    });
+      yield runFinished;
+    } catch (error) {
+      const runError: RunErrorEvent = {
+        type: EventType.RUN_ERROR,
+        message: (error as Error).message ?? "Unknown A2A error",
+      };
+      yield runError;
+      throw error;
+    }
   }
 
   private prepareConversation(input: RunAgentInput): ConvertedA2AMessages {
@@ -157,18 +143,15 @@ export class A2AAgent extends AbstractAgent {
     } as MessageSendParams;
   }
 
-  private async streamMessage(
+  private async *streamMessage(
     params: MessageSendParams,
-    subscriber: { next: (event: BaseEvent) => void },
     surfaceTracker?: SurfaceTracker,
-  ): Promise<A2AAgentRunResultSummary> {
+  ): AsyncIterable<BaseEvent> {
     const aggregatedText = new Map<string, string>();
-    const rawEvents: A2AStreamEvent[] = [];
     const tracker = surfaceTracker ?? this.createSurfaceTracker();
 
     const stream = this.a2aClient.sendMessageStream(params);
     for await (const chunk of stream) {
-      rawEvents.push(chunk as A2AStreamEvent);
       const events = convertA2AEventToAGUIEvents(chunk as A2AStreamEvent, {
         role: "assistant",
         messageIdMap: this.messageIdMap,
@@ -183,22 +166,16 @@ export class A2AAgent extends AbstractAgent {
         surfaceTracker: tracker,
       });
       for (const event of events) {
-        subscriber.next(event);
+        yield event;
       }
     }
-
-    return {
-      messages: [],
-      rawEvents,
-    };
   }
 
-  private async fallbackToBlocking(
+  private async *fallbackToBlocking(
     params: MessageSendParams,
-    subscriber: { next: (event: BaseEvent) => void },
     error: Error,
     surfaceTracker?: SurfaceTracker,
-  ): Promise<A2AAgentRunResultSummary> {
+  ): AsyncIterable<BaseEvent> {
     const configuration: MessageSendConfiguration = {
       ...params.configuration,
       acceptedOutputModes: params.configuration?.acceptedOutputModes ?? [
@@ -207,21 +184,19 @@ export class A2AAgent extends AbstractAgent {
       blocking: true,
     };
 
-    return this.blockingMessage(
+    yield* this.blockingMessage(
       {
         ...params,
         configuration,
       },
-      subscriber,
       surfaceTracker,
     );
   }
 
-  private async blockingMessage(
+  private async *blockingMessage(
     params: MessageSendParams,
-    subscriber: { next: (event: BaseEvent) => void },
     surfaceTracker?: SurfaceTracker,
-  ): Promise<A2AAgentRunResultSummary> {
+  ): AsyncIterable<BaseEvent> {
     const response = await this.a2aClient.sendMessage(params);
 
     if (this.a2aClient.isErrorResponse(response)) {
@@ -232,11 +207,9 @@ export class A2AAgent extends AbstractAgent {
     }
 
     const aggregatedText = new Map<string, string>();
-    const rawEvents: A2AStreamEvent[] = [];
     const tracker = surfaceTracker ?? this.createSurfaceTracker();
 
     const result = response.result as A2AStreamEvent;
-    rawEvents.push(result);
 
     const events = convertA2AEventToAGUIEvents(result, {
       role: "assistant",
@@ -253,13 +226,8 @@ export class A2AAgent extends AbstractAgent {
     });
 
     for (const event of events) {
-      subscriber.next(event);
+      yield event;
     }
-
-    return {
-      messages: [],
-      rawEvents,
-    };
   }
 
   private initializeExtension(client: A2AClient) {

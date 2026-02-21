@@ -8,62 +8,50 @@ import {
   RunFinishedEvent,
   RunStartedEvent,
 } from "@ag-ui/core";
-import { Observable } from "rxjs";
+import { collectAsync } from "@/async-utils";
 
 describe("Middleware live events", () => {
   class LiveEventAgent extends AbstractAgent {
-    run(input: RunAgentInput): Observable<BaseEvent> {
-      return new Observable<BaseEvent>((subscriber) => {
-        subscriber.next({
-          type: EventType.RUN_STARTED,
-          threadId: input.threadId,
-          runId: input.runId,
-        } as RunStartedEvent);
+    async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+      yield {
+        type: EventType.RUN_STARTED,
+        threadId: input.threadId,
+        runId: input.runId,
+      } as RunStartedEvent;
 
-        subscriber.next({
-          type: EventType.TEXT_MESSAGE_CHUNK,
-          messageId: "message-1",
-          role: "assistant",
-          delta: "Hello",
-        } as TextMessageChunkEvent);
+      yield {
+        type: EventType.TEXT_MESSAGE_CHUNK,
+        messageId: "message-1",
+        role: "assistant",
+        delta: "Hello",
+      } as TextMessageChunkEvent;
 
-        subscriber.next({
-          type: EventType.RUN_FINISHED,
-          threadId: input.threadId,
-          runId: input.runId,
-          result: { success: true },
-        } as RunFinishedEvent);
-
-        subscriber.complete();
-      });
+      yield {
+        type: EventType.RUN_FINISHED,
+        threadId: input.threadId,
+        runId: input.runId,
+        result: { success: true },
+      } as RunFinishedEvent;
     }
   }
 
   class CustomMiddleware extends Middleware {
-    run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
-      return new Observable<BaseEvent>((subscriber) => {
-        const subscription = next.run(input).subscribe({
-          next: (event) => {
-            if (event.type === EventType.RUN_STARTED) {
-              const started = event as RunStartedEvent;
-              subscriber.next({
-                ...started,
-                metadata: {
-                  ...(started.metadata ?? {}),
-                  custom: true,
-                },
-              });
-              return;
-            }
+    async *run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
+      for await (const event of next.run(input)) {
+        if (event.type === EventType.RUN_STARTED) {
+          const started = event as RunStartedEvent;
+          yield {
+            ...started,
+            metadata: {
+              ...(started.metadata ?? {}),
+              custom: true,
+            },
+          };
+          continue;
+        }
 
-            subscriber.next(event);
-          },
-          error: (error) => subscriber.error(error),
-          complete: () => subscriber.complete(),
-        });
-
-        return () => subscription.unsubscribe();
-      });
+        yield event;
+      }
     }
   }
 
@@ -81,13 +69,7 @@ describe("Middleware live events", () => {
     const agent = new LiveEventAgent();
     const middleware = new CustomMiddleware();
 
-    const events: BaseEvent[] = [];
-    await new Promise<void>((resolve) => {
-      middleware.run(input, agent).subscribe({
-        next: (event) => events.push(event),
-        complete: () => resolve(),
-      });
-    });
+    const events = await collectAsync(middleware.run(input, agent));
 
     expect(events.length).toBe(3);
     expect(events[0].type).toBe(EventType.RUN_STARTED);

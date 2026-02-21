@@ -10,7 +10,7 @@ import {
   TextMessageContentEvent,
   TextMessageEndEvent,
 } from "@ag-ui/core";
-import { Observable, of } from "rxjs";
+import { ofAsync } from "@/async-utils";
 import { AgentSubscriber } from "../../agent/subscriber";
 
 describe("RunStartedEvent with input.messages", () => {
@@ -21,8 +21,8 @@ describe("RunStartedEvent with input.messages", () => {
       this.events = events;
     }
 
-    protected run(input: RunAgentInput): Observable<BaseEvent> {
-      return of(...this.events);
+    run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+      return ofAsync(...this.events);
     }
   }
 

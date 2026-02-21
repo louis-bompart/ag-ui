@@ -19,8 +19,7 @@ import {
   StepStartedEvent,
   StepFinishedEvent,
 } from "@ag-ui/core";
-import { Observable, of, throwError, from } from "rxjs";
-import { mergeMap } from "rxjs/operators";
+import { ofAsync } from "@/async-utils";
 import { describe, it, expect, vi, beforeEach, test } from "vitest";
 
 // Mock uuid module
@@ -44,11 +43,11 @@ vi.mock("@/utils", async () => {
 
 // Mock the verify modules but NOT apply - we want to test against real defaultApplyEvents
 vi.mock("@/verify", () => ({
-  verifyEvents: vi.fn(() => (source$: Observable<any>) => source$),
+  verifyEvents: vi.fn(() => (source: AsyncIterable<any>) => source),
 }));
 
 vi.mock("@/chunks", () => ({
-  transformChunks: vi.fn(() => (source$: Observable<any>) => source$),
+  transformChunks: vi.fn(() => (source: AsyncIterable<any>) => source),
 }));
 
 // Create a test agent implementation
@@ -59,8 +58,8 @@ class TestAgent extends AbstractAgent {
     this.eventsToEmit = events;
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return of(...this.eventsToEmit);
+  run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    return ofAsync(...this.eventsToEmit);
   }
 }
 
@@ -433,14 +432,13 @@ describe("AgentSubscriber", () => {
 
       // Create an agent that throws an error
       class ErrorAgent extends AbstractAgent {
-        run(input: RunAgentInput): Observable<BaseEvent> {
-          return from([
-            {
-              type: EventType.RUN_STARTED,
-              threadId: input.threadId,
-              runId: input.runId,
-            } as RunStartedEvent,
-          ]).pipe(mergeMap(() => throwError(() => new Error("Test error"))));
+        async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+          yield {
+            type: EventType.RUN_STARTED,
+            threadId: input.threadId,
+            runId: input.runId,
+          } as RunStartedEvent;
+          throw new Error("Test error");
         }
       }
 
@@ -474,14 +472,13 @@ describe("AgentSubscriber", () => {
 
       // Create an agent that throws an error
       class ErrorAgent extends AbstractAgent {
-        run(input: RunAgentInput): Observable<BaseEvent> {
-          return from([
-            {
-              type: EventType.RUN_STARTED,
-              threadId: input.threadId,
-              runId: input.runId,
-            } as RunStartedEvent,
-          ]).pipe(mergeMap(() => throwError(() => new Error("Test error"))));
+        async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+          yield {
+            type: EventType.RUN_STARTED,
+            threadId: input.threadId,
+            runId: input.runId,
+          } as RunStartedEvent;
+          throw new Error("Test error");
         }
       }
 
@@ -716,14 +713,13 @@ describe("AgentSubscriber", () => {
 
       // Create an agent that throws an error
       class ErrorAgent extends AbstractAgent {
-        run(input: RunAgentInput): Observable<BaseEvent> {
-          return from([
-            {
-              type: EventType.RUN_STARTED,
-              threadId: input.threadId,
-              runId: input.runId,
-            } as RunStartedEvent,
-          ]).pipe(mergeMap(() => throwError(() => new Error("Test error"))));
+        async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+          yield {
+            type: EventType.RUN_STARTED,
+            threadId: input.threadId,
+            runId: input.runId,
+          } as RunStartedEvent;
+          throw new Error("Test error");
         }
       }
 

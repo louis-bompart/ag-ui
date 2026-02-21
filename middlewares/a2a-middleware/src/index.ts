@@ -5,11 +5,10 @@ import {
   EventType,
   RunAgentInput,
   ToolCallResultEvent,
+  ToolCallArgsEvent,
   Message,
   ToolCallStartEvent,
   transformChunks,
-  AgentSubscriber,
-  RunFinishedEventSchema,
   RunFinishedEvent,
   TextMessageStartEvent,
   TextMessageEndEvent,
@@ -21,7 +20,6 @@ import {
   SendMessageResponse,
   SendMessageSuccessResponse,
 } from "@a2a-js/sdk";
-import { Observable, Subscriber, tap } from "rxjs";
 import { createSystemPrompt, sendMessageToA2AAgentTool } from "./utils";
 import { randomUUID } from "@ag-ui/client";
 
@@ -47,247 +45,203 @@ export class A2AMiddlewareAgent extends AbstractAgent {
     this.orchestrationAgent = config.orchestrationAgent;
   }
 
-  finishTextMessages(
-    observer: Subscriber<{
-      type: EventType;
-      timestamp?: number | undefined;
-      rawEvent?: any;
-    }>,
+  private *finishTextMessages(
     pendingTextMessages: Set<string>,
-  ): void {
-    pendingTextMessages.forEach((messageId) => {
-      observer.next({
+  ): Iterable<BaseEvent> {
+    for (const messageId of pendingTextMessages) {
+      yield {
         type: EventType.TEXT_MESSAGE_END,
-        messageId: messageId,
-      } as TextMessageEndEvent);
-      pendingTextMessages.delete(messageId);
+        messageId,
+      } as TextMessageEndEvent;
+    }
+    pendingTextMessages.clear();
+  }
+
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    const agentCards = await this.agentCards;
+    const newSystemPrompt = createSystemPrompt(
+      agentCards,
+      this.instructions,
+    );
+
+    const messages = input.messages;
+    if (messages.length && messages[0].role === "system") {
+      // remove the first message if it is a system message
+      messages.shift();
+    }
+
+    messages.unshift({
+      role: "system",
+      content: newSystemPrompt,
+      id: randomUUID(),
     });
-  }
 
-  wrapStream(
-    stream: Observable<BaseEvent>,
-    pendingA2ACalls: Set<string>,
-    pendingTextMessages: Set<string>,
-    observer: Subscriber<{
-      type: EventType;
-      timestamp?: number | undefined;
-      rawEvent?: any;
-    }>,
-    input: RunAgentInput,
-  ): any {
-    const applyAndProcessEvents = (source$: Observable<BaseEvent>) => {
-      // Apply events to get mutations
-      const mutations$ = this.apply(input, source$, this.subscribers);
-      // Process the mutations
-      const processedMutations$ = this.processApplyEvents(
-        input,
-        mutations$,
-        this.subscribers,
-      );
-      // Subscribe to the processed mutations to trigger side effects
-      processedMutations$.subscribe();
-      // Return the original stream to maintain BaseEvent type
-      return source$;
-    };
+    input.tools = [...(input.tools || []), sendMessageToA2AAgentTool];
 
-    const markTextMessageAsPending = (event: BaseEvent) => {
-      if (event.type === EventType.TEXT_MESSAGE_START) {
-        const textMessageStartEvent = event as TextMessageStartEvent;
-        pendingTextMessages.add(textMessageStartEvent.messageId);
-        return;
-      }
-      if (event.type === EventType.TEXT_MESSAGE_END) {
-        const textMessageEndEvent = event as TextMessageEndEvent;
-        pendingTextMessages.delete(textMessageEndEvent.messageId);
-        return;
-      }
-    };
+    // Run loop: orchestrate agent runs, resolve A2A calls, repeat if needed
+    let shouldContinue = true;
+    while (shouldContinue) {
+      shouldContinue = false;
 
-    return stream
-      .pipe(
-        transformChunks(this.debug),
-        applyAndProcessEvents,
-        tap(markTextMessageAsPending),
-      )
-      .subscribe({
-        next: (event: BaseEvent) => {
-          // Handle tool call start events for send_message_to_a2a_agent
-          if (
-            event.type === EventType.TOOL_CALL_START &&
-            "toolCallName" in event &&
-            "toolCallId" in event &&
-            (event as ToolCallStartEvent).toolCallName.startsWith(
-              "send_message_to_a2a_agent",
-            )
-          ) {
-            // Track this as a pending A2A call
-            pendingA2ACalls.add(event.toolCallId as string);
-            // Proxy the start event normally
-            observer.next(event);
-            return;
-          }
+      const pendingA2ACalls = new Set<string>();
+      const pendingTextMessages = new Set<string>();
+      const toolCallArgsMap = new Map<string, string>();
 
-          // Handle tool call result events for send_message_to_a2a_agent
-          if (
-            event.type === EventType.TOOL_CALL_RESULT &&
-            "toolCallId" in event &&
-            pendingA2ACalls.has(event.toolCallId as string)
-          ) {
-            // This is a result for our A2A tool call
-            pendingA2ACalls.delete(event.toolCallId as string);
-            observer.next(event);
-            return;
-          }
+      const source = this.orchestrationAgent.run(input);
+      const chunked = transformChunks(this.debug)(source);
 
-          // Handle run completion events
-          if (event.type === EventType.RUN_FINISHED) {
-            this.finishTextMessages(observer, pendingTextMessages);
-
-            if (pendingA2ACalls.size > 0) {
-              // Array to collect all new tool result messages
-              const newToolMessages: Message[] = [];
-
-              const callProms = [...pendingA2ACalls].map((toolCallId) => {
-                const toolCallsFromMessages = this.messages
-                  .filter((message) => message.role === "assistant")
-                  .flatMap((message) => message.toolCalls || [])
-                  .filter((toolCall) => toolCall.id === toolCallId);
-
-                const toolArgs = toolCallsFromMessages[0]?.function.arguments;
-                if (!toolArgs) {
-                  throw new Error(
-                    `Tool arguments not found for tool call id ${toolCallId}`,
-                  );
-                }
-                const parsed = JSON.parse(toolArgs);
-                const agentName = parsed.agentName;
-                const task = parsed.task;
-
-                if (this.debug) {
-                  console.debug("sending message to a2a agent", {
-                    agentName,
-                    message: task,
-                  });
-                }
-                return this.sendMessageToA2AAgent(agentName, task)
-                  .then((a2aResponse) => {
-                    const newMessage: Message = {
-                      id: randomUUID(),
-                      role: "tool",
-                      toolCallId: toolCallId,
-                      content: a2aResponse,
-                    };
-                    if (this.debug) {
-                      console.debug("newMessage From a2a agent", newMessage);
-                    }
-                    this.addMessage(newMessage);
-                    this.orchestrationAgent.addMessage(newMessage);
-
-                    // Collect the message so we can add it to input.messages
-                    newToolMessages.push(newMessage);
-
-                    const newEvent: ToolCallResultEvent = {
-                      type: EventType.TOOL_CALL_RESULT,
-                      toolCallId: toolCallId,
-                      messageId: newMessage.id,
-                      content: a2aResponse,
-                    };
-
-                    observer.next(newEvent);
-
-                    pendingA2ACalls.delete(toolCallId);
-                  })
-                  .finally(() => {
-                    pendingA2ACalls.delete(toolCallId as string);
-                  });
-              });
-
-              Promise.all(callProms).then(() => {
-                this.finishTextMessages(observer, pendingTextMessages);
-                observer.next({
-                  type: EventType.RUN_FINISHED,
-                  threadId: input.threadId,
-                  runId: input.runId,
-                } as RunFinishedEvent);
-
-                // Add all tool result messages to input.messages BEFORE triggering new run
-                // This ensures the orchestrator sees the tool results in its context
-                newToolMessages.forEach((msg) => {
-                  input.messages.push(msg);
-                });
-
-                this.triggerNewRun(
-                  observer,
-                  input,
-                  pendingA2ACalls,
-                  pendingTextMessages,
-                );
-              });
-            } else {
-              observer.next(event);
-              observer.complete();
-              return;
-            }
-            return;
-          }
-
-          // Handle run error events - emit immediately and exit
-          if (event.type === EventType.RUN_ERROR) {
-            observer.next(event);
-            observer.error(event);
-            return;
-          }
-
-          // Proxy all other events
-          observer.next(event);
-        },
-        error: (error) => {
-          observer.error(error);
-        },
-        complete: () => {
-          // Only complete if run is actually finished and no pending calls
-          if (pendingA2ACalls.size === 0) {
-            observer.complete();
-          }
-        },
-      });
-  }
-
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable<BaseEvent>((observer) => {
-      const run = async () => {
-        let pendingA2ACalls = new Set<string>();
-        const pendingTextMessages = new Set<string>();
-        const agentCards = await this.agentCards;
-        const newSystemPrompt = createSystemPrompt(
-          agentCards,
-          this.instructions,
-        );
-
-        const messages = input.messages;
-        if (messages.length && messages[0].role === "system") {
-          // remove the first message if it is a system message
-          messages.shift();
+      for await (const event of chunked) {
+        // Track text message state
+        if (event.type === EventType.TEXT_MESSAGE_START) {
+          pendingTextMessages.add(
+            (event as TextMessageStartEvent).messageId,
+          );
+        } else if (event.type === EventType.TEXT_MESSAGE_END) {
+          pendingTextMessages.delete(
+            (event as TextMessageEndEvent).messageId,
+          );
         }
 
-        messages.unshift({
-          role: "system",
-          content: newSystemPrompt,
-          id: randomUUID(),
-        });
+        // Handle tool call start events for send_message_to_a2a_agent
+        if (
+          event.type === EventType.TOOL_CALL_START &&
+          "toolCallName" in event &&
+          "toolCallId" in event &&
+          (event as ToolCallStartEvent).toolCallName.startsWith(
+            "send_message_to_a2a_agent",
+          )
+        ) {
+          const toolCallId = (event as ToolCallStartEvent).toolCallId;
+          pendingA2ACalls.add(toolCallId);
+          toolCallArgsMap.set(toolCallId, "");
+          yield event;
+          continue;
+        }
 
-        input.tools = [...(input.tools || []), sendMessageToA2AAgentTool];
+        // Accumulate tool call args for pending A2A calls
+        if (
+          event.type === EventType.TOOL_CALL_ARGS &&
+          "toolCallId" in event
+        ) {
+          const tcEvent = event as ToolCallArgsEvent;
+          if (pendingA2ACalls.has(tcEvent.toolCallId)) {
+            const current = toolCallArgsMap.get(tcEvent.toolCallId) || "";
+            toolCallArgsMap.set(
+              tcEvent.toolCallId,
+              current + (tcEvent.delta || ""),
+            );
+          }
+          yield event;
+          continue;
+        }
 
-        // Start the orchestration agent run
-        this.triggerNewRun(
-          observer,
-          input,
-          pendingA2ACalls,
-          pendingTextMessages,
-        );
-      };
-      run();
-    });
+        // Handle tool call result events for send_message_to_a2a_agent
+        if (
+          event.type === EventType.TOOL_CALL_RESULT &&
+          "toolCallId" in event &&
+          pendingA2ACalls.has((event as ToolCallResultEvent).toolCallId)
+        ) {
+          pendingA2ACalls.delete(
+            (event as ToolCallResultEvent).toolCallId,
+          );
+          yield event;
+          continue;
+        }
+
+        // Handle run completion events
+        if (event.type === EventType.RUN_FINISHED) {
+          yield* this.finishTextMessages(pendingTextMessages);
+
+          if (pendingA2ACalls.size > 0) {
+            // Array to collect all new tool result messages
+            const newToolMessages: Message[] = [];
+
+            const callProms = [...pendingA2ACalls].map((toolCallId) => {
+              const toolArgs = toolCallArgsMap.get(toolCallId);
+              if (!toolArgs) {
+                throw new Error(
+                  `Tool arguments not found for tool call id ${toolCallId}`,
+                );
+              }
+              const parsed = JSON.parse(toolArgs);
+              const agentName = parsed.agentName;
+              const task = parsed.task;
+
+              if (this.debug) {
+                console.debug("sending message to a2a agent", {
+                  agentName,
+                  message: task,
+                });
+              }
+              return this.sendMessageToA2AAgent(agentName, task)
+                .then((a2aResponse) => {
+                  const newMessage: Message = {
+                    id: randomUUID(),
+                    role: "tool",
+                    toolCallId: toolCallId,
+                    content: a2aResponse,
+                  };
+                  if (this.debug) {
+                    console.debug("newMessage From a2a agent", newMessage);
+                  }
+                  this.addMessage(newMessage);
+                  this.orchestrationAgent.addMessage(newMessage);
+
+                  // Collect the message so we can add it to input.messages
+                  newToolMessages.push(newMessage);
+
+                  return { toolCallId, newMessage, a2aResponse };
+                })
+                .finally(() => {
+                  pendingA2ACalls.delete(toolCallId);
+                });
+            });
+
+            const results = await Promise.all(callProms);
+
+            // Yield tool call results
+            for (const { toolCallId, newMessage, a2aResponse } of results) {
+              yield {
+                type: EventType.TOOL_CALL_RESULT,
+                toolCallId,
+                messageId: newMessage.id,
+                content: a2aResponse,
+              } as ToolCallResultEvent;
+
+              pendingA2ACalls.delete(toolCallId);
+            }
+
+            yield* this.finishTextMessages(pendingTextMessages);
+            yield {
+              type: EventType.RUN_FINISHED,
+              threadId: input.threadId,
+              runId: input.runId,
+            } as RunFinishedEvent;
+
+            // Add all tool result messages to input.messages BEFORE triggering new run
+            // This ensures the orchestrator sees the tool results in its context
+            for (const msg of newToolMessages) {
+              input.messages.push(msg);
+            }
+
+            // Continue for next orchestration agent run
+            shouldContinue = true;
+          } else {
+            yield event;
+          }
+          continue;
+        }
+
+        // Handle run error events - emit immediately and exit
+        if (event.type === EventType.RUN_ERROR) {
+          yield event;
+          return;
+        }
+
+        // Proxy all other events
+        yield event;
+      }
+    }
   }
 
   private async sendMessageToA2AAgent(
@@ -337,21 +291,5 @@ export class A2AMiddlewareAgent extends AbstractAgent {
     }
 
     return responseContent;
-  }
-
-  private triggerNewRun(
-    observer: any,
-    input: RunAgentInput,
-    pendingA2ACalls: Set<string>,
-    pendingTextMessages: Set<string>,
-  ): void {
-    const newRunStream = this.orchestrationAgent.run(input);
-    this.wrapStream(
-      newRunStream,
-      pendingA2ACalls,
-      pendingTextMessages,
-      observer,
-      input,
-    );
   }
 }

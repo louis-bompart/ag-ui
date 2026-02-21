@@ -11,8 +11,8 @@ import {
   ActivitySnapshotEvent,
   RunStartedEvent,
   RunFinishedEvent,
+  EventWithState,
 } from "@ag-ui/client";
-import { Observable, from, switchMap } from "rxjs";
 import { Client } from "@modelcontextprotocol/sdk/client/index.js";
 import { SSEClientTransport } from "@modelcontextprotocol/sdk/client/sse.js";
 import { StreamableHTTPClientTransport } from "@modelcontextprotocol/sdk/client/streamableHttp.js";
@@ -37,12 +37,7 @@ export interface ProxiedMCPRequest {
   params?: Record<string, unknown>;
 }
 
-/**
- * Extract EventWithState type from Middleware.runNextWithState return type
- */
-type ExtractObservableType<T> = T extends Observable<infer U> ? U : never;
-type RunNextWithStateReturn = ReturnType<Middleware["runNextWithState"]>;
-export type EventWithState = ExtractObservableType<RunNextWithStateReturn>;
+export { EventWithState };
 
 /**
  * UI Tool with its source server config and resource URI
@@ -163,43 +158,43 @@ export class MCPAppsMiddleware extends Middleware {
     }
   }
 
-  run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
+  async *run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
     // Check for proxied MCP request mode
     const proxiedRequest = input.forwardedProps
       ?.__proxiedMCPRequest as ProxiedMCPRequest | undefined;
     if (proxiedRequest) {
-      return this.handleProxiedMCPRequest(input.runId, proxiedRequest);
+      yield* this.handleProxiedMCPRequest(input.runId, proxiedRequest);
+      return;
     }
 
     // If no MCP servers configured, pass through using runNextWithState
     if (!this.config.mcpServers?.length) {
-      return this.processStream(
+      yield* this.processStream(
         this.runNextWithState(input, next),
         new Map()
       );
+      return;
     }
 
     // Fetch UI tools from MCP servers and inject them
-    return from(this.fetchUITools()).pipe(
-      switchMap((uiToolInfos) => {
-        // Build map of tool name -> UIToolInfo
-        const uiToolsMap = new Map<string, UIToolInfo>();
-        for (const info of uiToolInfos) {
-          uiToolsMap.set(info.tool.name, info);
-        }
+    const uiToolInfos = await this.fetchUITools();
 
-        // Merge UI tools with existing input tools
-        const enhancedInput: RunAgentInput = {
-          ...input,
-          tools: [...input.tools, ...uiToolInfos.map((info) => info.tool)],
-        };
+    // Build map of tool name -> UIToolInfo
+    const uiToolsMap = new Map<string, UIToolInfo>();
+    for (const info of uiToolInfos) {
+      uiToolsMap.set(info.tool.name, info);
+    }
 
-        // Use runNextWithState to get state with each event
-        return this.processStream(
-          this.runNextWithState(enhancedInput, next),
-          uiToolsMap
-        );
-      })
+    // Merge UI tools with existing input tools
+    const enhancedInput: RunAgentInput = {
+      ...input,
+      tools: [...input.tools, ...uiToolInfos.map((info) => info.tool)],
+    };
+
+    // Use runNextWithState to get state with each event
+    yield* this.processStream(
+      this.runNextWithState(enhancedInput, next),
+      uiToolsMap
     );
   }
 
@@ -207,66 +202,57 @@ export class MCPAppsMiddleware extends Middleware {
    * Handle a proxied MCP request from the frontend iframe.
    * This bypasses the normal agent flow and directly executes the MCP request.
    */
-  private handleProxiedMCPRequest(
+  private async *handleProxiedMCPRequest(
     runId: string,
     request: ProxiedMCPRequest
-  ): Observable<BaseEvent> {
-    return new Observable<BaseEvent>((subscriber) => {
-      // Look up server config - prefer serverId, fallback to serverHash
-      let serverConfig: MCPClientConfig | undefined;
-      if (request.serverId) {
-        serverConfig = this.serverConfigMapById.get(request.serverId);
-      }
-      if (!serverConfig) {
-        serverConfig = this.serverConfigMapByHash.get(request.serverHash);
-      }
+  ): AsyncIterable<BaseEvent> {
+    // Look up server config - prefer serverId, fallback to serverHash
+    let serverConfig: MCPClientConfig | undefined;
+    if (request.serverId) {
+      serverConfig = this.serverConfigMapById.get(request.serverId);
+    }
+    if (!serverConfig) {
+      serverConfig = this.serverConfigMapByHash.get(request.serverHash);
+    }
 
-      // Emit RunStarted
-      const runStartedEvent: RunStartedEvent = {
-        type: EventType.RUN_STARTED,
+    // Emit RunStarted
+    yield {
+      type: EventType.RUN_STARTED,
+      runId,
+      threadId: runId,
+    } as RunStartedEvent;
+
+    // Handle unknown server
+    if (!serverConfig) {
+      yield {
+        type: EventType.RUN_FINISHED,
         runId,
         threadId: runId,
-      };
-      subscriber.next(runStartedEvent);
+        result: { error: `Unknown server: ${request.serverId || request.serverHash}` },
+      } as RunFinishedEvent;
+      return;
+    }
 
-      // Handle unknown server
-      if (!serverConfig) {
-        const runFinishedEvent: RunFinishedEvent = {
-          type: EventType.RUN_FINISHED,
-          runId,
-          threadId: runId,
-          result: { error: `Unknown server: ${request.serverId || request.serverHash}` },
-        };
-        subscriber.next(runFinishedEvent);
-        subscriber.complete();
-        return;
-      }
-
+    try {
       // Execute the MCP request
-      this.executeMCPRequest(serverConfig, request.method, request.params)
-        .then((result) => {
-          // Emit RunFinished with the MCP result
-          const runFinishedEvent: RunFinishedEvent = {
-            type: EventType.RUN_FINISHED,
-            runId,
-            threadId: runId,
-            result,
-          };
-          subscriber.next(runFinishedEvent);
-          subscriber.complete();
-        })
-        .catch((error) => {
-          // Emit RunFinished with error
-          const runFinishedEvent: RunFinishedEvent = {
-            type: EventType.RUN_FINISHED,
-            runId,
-            threadId: runId,
-            result: { error: String(error) },
-          };
-          subscriber.next(runFinishedEvent);
-          subscriber.complete();
-        });
-    });
+      const result = await this.executeMCPRequest(serverConfig, request.method, request.params);
+
+      // Emit RunFinished with the MCP result
+      yield {
+        type: EventType.RUN_FINISHED,
+        runId,
+        threadId: runId,
+        result,
+      } as RunFinishedEvent;
+    } catch (error) {
+      // Emit RunFinished with error
+      yield {
+        type: EventType.RUN_FINISHED,
+        runId,
+        threadId: runId,
+        result: { error: String(error) },
+      } as RunFinishedEvent;
+    }
   }
 
   /**
@@ -334,118 +320,95 @@ export class MCPAppsMiddleware extends Middleware {
    * a) Another event comes -> flush the held RunFinished immediately
    * b) Stream ends -> do special processing, then flush RunFinished and complete
    */
-  private processStream(
-    source: Observable<EventWithState>,
+  private async *processStream(
+    source: AsyncIterable<EventWithState>,
     uiToolsMap: Map<string, UIToolInfo>
-  ): Observable<BaseEvent> {
-    return new Observable<BaseEvent>((subscriber) => {
-      let heldRunFinished: EventWithState | null = null;
-      let isProcessing = false;
+  ): AsyncIterable<BaseEvent> {
+    let heldRunFinished: EventWithState | null = null;
 
-      const subscription = source.subscribe({
-        next: (eventWithState) => {
-          const event = eventWithState.event;
+    for await (const eventWithState of source) {
+      const event = eventWithState.event;
 
-          // If we have a held RunFinished and a new event comes, flush it first
-          if (heldRunFinished) {
-            subscriber.next(heldRunFinished.event);
-            heldRunFinished = null;
+      // If we have a held RunFinished and a new event comes, flush it first
+      if (heldRunFinished) {
+        yield heldRunFinished.event;
+        heldRunFinished = null;
+      }
+
+      // If this is a RunFinished event, hold it back
+      if (event.type === EventType.RUN_FINISHED) {
+        heldRunFinished = eventWithState;
+      } else {
+        yield event;
+      }
+    }
+
+    // Stream ended - do special processing if we have a held RunFinished
+    if (heldRunFinished) {
+      try {
+        // Find tool calls that don't have a corresponding result message
+        const pendingToolCalls = this.findPendingToolCalls(
+          heldRunFinished.messages
+        );
+
+        // Filter for UI tool calls (tools we injected from MCP servers)
+        const pendingUIToolCalls = pendingToolCalls.filter((tc) =>
+          uiToolsMap.has(tc.function.name)
+        );
+
+        // Execute pending UI tool calls and emit results
+        for (const toolCall of pendingUIToolCalls) {
+          const toolInfo = uiToolsMap.get(toolCall.function.name)!;
+          try {
+            const args = JSON.parse(toolCall.function.arguments || "{}");
+            const mcpResult = await this.executeToolCall(
+              toolInfo.serverConfig,
+              toolCall.function.name,
+              args
+            );
+
+            // Emit tool result event
+            yield {
+              type: EventType.TOOL_CALL_RESULT,
+              messageId: randomUUID(),
+              toolCallId: toolCall.id,
+              content: this.extractTextContent(mcpResult),
+            } as ToolCallResultEvent;
+
+            // Emit activity snapshot with MCP result and resourceUri (frontend fetches resource)
+            yield {
+              type: EventType.ACTIVITY_SNAPSHOT,
+              messageId: randomUUID(),
+              activityType: MCPAppsActivityType,
+              content: {
+                result: mcpResult,
+                resourceUri: toolInfo.resourceUri,
+                serverHash: getServerHash(toolInfo.serverConfig),
+                serverId: toolInfo.serverConfig.serverId,
+                toolInput: args,
+              },
+              replace: true,
+            } as ActivitySnapshotEvent;
+          } catch (error) {
+            console.error(
+              `Failed to execute UI tool call ${toolCall.function.name}:`,
+              error
+            );
+            // Emit error result
+            yield {
+              type: EventType.TOOL_CALL_RESULT,
+              messageId: randomUUID(),
+              toolCallId: toolCall.id,
+              content: JSON.stringify({ error: String(error) }),
+            } as ToolCallResultEvent;
           }
+        }
 
-          // If this is a RunFinished event, hold it back
-          if (event.type === EventType.RUN_FINISHED) {
-            heldRunFinished = eventWithState;
-          } else {
-            subscriber.next(event);
-          }
-        },
-        error: (err) => {
-          // On error, flush any held event and propagate error
-          if (heldRunFinished) {
-            subscriber.next(heldRunFinished.event);
-            heldRunFinished = null;
-          }
-          subscriber.error(err);
-        },
-        complete: async () => {
-          // Stream ended - do special processing if we have a held RunFinished
-          if (heldRunFinished && !isProcessing) {
-            isProcessing = true;
-
-            try {
-              // Find tool calls that don't have a corresponding result message
-              const pendingToolCalls = this.findPendingToolCalls(
-                heldRunFinished.messages
-              );
-
-              // Filter for UI tool calls (tools we injected from MCP servers)
-              const pendingUIToolCalls = pendingToolCalls.filter((tc) =>
-                uiToolsMap.has(tc.function.name)
-              );
-
-              // Execute pending UI tool calls and emit results
-              for (const toolCall of pendingUIToolCalls) {
-                const toolInfo = uiToolsMap.get(toolCall.function.name)!;
-                try {
-                  const args = JSON.parse(toolCall.function.arguments || "{}");
-                  const mcpResult = await this.executeToolCall(
-                    toolInfo.serverConfig,
-                    toolCall.function.name,
-                    args
-                  );
-
-                  // Emit tool result event
-                  const resultEvent: ToolCallResultEvent = {
-                    type: EventType.TOOL_CALL_RESULT,
-                    messageId: randomUUID(),
-                    toolCallId: toolCall.id,
-                    content: this.extractTextContent(mcpResult),
-                  };
-                  subscriber.next(resultEvent);
-
-                  // Emit activity snapshot with MCP result and resourceUri (frontend fetches resource)
-                  const activityEvent: ActivitySnapshotEvent = {
-                    type: EventType.ACTIVITY_SNAPSHOT,
-                    messageId: randomUUID(),
-                    activityType: MCPAppsActivityType,
-                    content: {
-                      result: mcpResult,
-                      resourceUri: toolInfo.resourceUri,
-                      serverHash: getServerHash(toolInfo.serverConfig),
-                      serverId: toolInfo.serverConfig.serverId,
-                      toolInput: args,
-                    },
-                    replace: true,
-                  };
-                  subscriber.next(activityEvent);
-                } catch (error) {
-                  console.error(
-                    `Failed to execute UI tool call ${toolCall.function.name}:`,
-                    error
-                  );
-                  // Emit error result
-                  const errorResult: ToolCallResultEvent = {
-                    type: EventType.TOOL_CALL_RESULT,
-                    messageId: randomUUID(),
-                    toolCallId: toolCall.id,
-                    content: JSON.stringify({ error: String(error) }),
-                  };
-                  subscriber.next(errorResult);
-                }
-              }
-
-              subscriber.next(heldRunFinished.event);
-            } finally {
-              heldRunFinished = null;
-              isProcessing = false;
-            }
-          }
-          subscriber.complete();
-        },
-      });
-
-      return () => subscription.unsubscribe();
-    });
+        yield heldRunFinished.event;
+      } finally {
+        heldRunFinished = null;
+      }
+    }
   }
 
   /**

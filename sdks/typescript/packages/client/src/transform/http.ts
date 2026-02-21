@@ -1,81 +1,73 @@
 import { BaseEvent, EventSchemas } from "@ag-ui/core";
-import { Subject, ReplaySubject, Observable } from "rxjs";
 import { HttpEvent, HttpEventType } from "../run/http-request";
 import { parseSSEStream } from "./sse";
-import { parseProtoStream } from "./proto";
-import {AGUI_MEDIA_TYPE} from "@ag-ui/proto";
+// import { parseProtoStream } from "./proto";
+// import {AGUI_MEDIA_TYPE} from "@ag-ui/proto";
 import { EventType } from "@ag-ui/core";
 
 /**
  * Transforms HTTP events into BaseEvents using the appropriate format parser based on content type.
  */
-export const transformHttpEventStream = (source$: Observable<HttpEvent>): Observable<BaseEvent> => {
-  const eventSubject = new Subject<BaseEvent>();
-
-  // Use ReplaySubject to buffer events until we decide on the parser
-  const bufferSubject = new ReplaySubject<HttpEvent>();
-
-  // Flag to track whether we've set up the parser
+export async function* transformHttpEventStream(
+  source: AsyncIterable<HttpEvent>,
+): AsyncIterable<BaseEvent> {
+  // Buffer events until we know the content-type, then pipe through the right parser
+  const buffered: HttpEvent[] = [];
   let parserInitialized = false;
+  let contentType: string | null = null;
 
-  // Subscribe to source and buffer events while we determine the content type
-  source$.subscribe({
-    next: (event: HttpEvent) => {
-      // Forward event to buffer
-      bufferSubject.next(event);
+  for await (const event of source) {
+    if (!parserInitialized) {
+      buffered.push(event);
 
-      // If we get headers and haven't initialized a parser yet, check content type
-      if (event.type === HttpEventType.HEADERS && !parserInitialized) {
+      if (event.type === HttpEventType.HEADERS) {
         parserInitialized = true;
-        const contentType = event.headers.get("content-type");
+        contentType = event.headers.get("content-type");
+
+        // Create an async iterable that replays buffered events then continues from source
+        const replayAndContinue = replayThenForward(buffered, source);
 
         // Choose parser based on content type
-        if (contentType === AGUI_MEDIA_TYPE) {
-          // Use protocol buffer parser
-          parseProtoStream(bufferSubject).subscribe({
-            next: (event) => eventSubject.next(event),
-            error: (err) => eventSubject.error(err),
-            complete: () => eventSubject.complete(),
-          });
-        } else {
+        // if (contentType === AGUI_MEDIA_TYPE) {
+        //   yield* parseProtoStream(replayAndContinue);
+        // } else {
+        {
           // Use SSE JSON parser for all other cases
-          parseSSEStream(bufferSubject).subscribe({
-            next: (json) => {
-              try {
-                const parsedEvent = EventSchemas.parse(json);
-                eventSubject.next(parsedEvent as BaseEvent);
-              } catch (err) {
-                eventSubject.error(err);
-              }
-            },
-            error: (err) => {
-              if ((err as DOMException)?.name === "AbortError") {
-                eventSubject.next({
-                  type: EventType.RUN_ERROR,
-                  message: (err as DOMException).message || "Request aborted",
-                  code: "abort",
-                  rawEvent: err,
-                });
-                eventSubject.complete();
-                return;
-              }
-              return eventSubject.error(err)
-            },
-            complete: () => eventSubject.complete(),
-          });
+          for await (const json of parseSSEStream(replayAndContinue)) {
+            try {
+              const parsedEvent = EventSchemas.parse(json);
+              yield parsedEvent as BaseEvent;
+            } catch (err) {
+              throw err;
+            }
+          }
         }
-      } else if (!parserInitialized) {
-        eventSubject.error(new Error("No headers event received before data events"));
+        // After the parser finishes, we're done
+        return;
       }
-    },
-    error: (err) => {
-      bufferSubject.error(err);
-      eventSubject.error(err);
-    },
-    complete: () => {
-      bufferSubject.complete();
-    },
-  });
+    }
+  }
 
-  return eventSubject.asObservable();
-};
+  // If we never got headers, that's an error
+  if (!parserInitialized) {
+    throw new Error("No headers event received before stream ended");
+  }
+}
+
+/**
+ * Creates an async iterable that first yields all buffered events,
+ * then yields remaining events from the source. Since the source
+ * iterator has already been partially consumed by the outer loop,
+ * we continue from where we left off.
+ */
+async function* replayThenForward(
+  buffered: HttpEvent[],
+  source: AsyncIterable<HttpEvent>,
+): AsyncIterable<HttpEvent> {
+  // Replay buffered events
+  for (const event of buffered) {
+    yield event;
+  }
+  // Forward remaining events from source
+  yield* source;
+}

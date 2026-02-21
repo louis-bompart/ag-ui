@@ -1,6 +1,4 @@
-import { Subject } from "rxjs";
-import { toArray } from "rxjs/operators";
-import { firstValueFrom } from "rxjs";
+import { AsyncChannel, collectAsync } from "@/async-utils";
 import {
   AssistantMessage,
   BaseEvent,
@@ -23,8 +21,7 @@ const createAgent = (messages: Message[] = []) =>
 
 describe("defaultApplyEvents with tool calls", () => {
   it("should handle a single tool call correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState = {
       messages: [],
       state: {
@@ -37,47 +34,40 @@ describe("defaultApplyEvents with tool calls", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query": "',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: "test search",
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '"}',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // We should have exactly 4 state updates:
@@ -114,8 +104,7 @@ describe("defaultApplyEvents with tool calls", () => {
   });
 
   it("should handle multiple tool calls correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -125,55 +114,48 @@ describe("defaultApplyEvents with tool calls", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events for two different tool calls
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // First tool call
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query":"test"}',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
     // Second tool call
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool2",
       toolCallName: "calculate",
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool2",
       delta: '{"expression":"1+1"}',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool2",
     } as ToolCallEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // We should have exactly 4 state updates:
@@ -209,8 +191,7 @@ describe("defaultApplyEvents with tool calls", () => {
   });
 
   it("should handle tool calls with parent message ID correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
 
     // Create initial state with an existing message
     const parentMessageId = "existing_message";
@@ -230,38 +211,31 @@ describe("defaultApplyEvents with tool calls", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages as Message[]);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
       parentMessageId: parentMessageId,
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query":"test"}',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // We should have exactly 2 state updates
@@ -283,8 +257,7 @@ describe("defaultApplyEvents with tool calls", () => {
   });
 
   it("should handle errors and partial updates correctly", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -294,42 +267,35 @@ describe("defaultApplyEvents with tool calls", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events with errors in the tool args JSON
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query',
     } as ToolCallArgsEvent); // Incomplete JSON
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: ':"test"}',
     } as ToolCallArgsEvent); // Completes the JSON
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // We should still have updates despite the JSON syntax error
@@ -343,8 +309,7 @@ describe("defaultApplyEvents with tool calls", () => {
   });
 
   it("should handle advanced scenarios with multiple tools and text messages", async () => {
-    // Create a subject and state for events
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -354,55 +319,48 @@ describe("defaultApplyEvents with tool calls", () => {
       context: [],
     };
 
-    // Create the observable stream
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    // Collect all emitted state updates in an array
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const stateUpdatesPromise = collectAsync(result$);
 
     // Send events with a mix of tool calls and text messages
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // First tool call
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool1",
       toolCallName: "search",
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool1",
       delta: '{"query":"test"}',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool1",
     } as ToolCallEndEvent);
 
     // Second tool call
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_START,
       toolCallId: "tool2",
       toolCallName: "calculate",
     } as ToolCallStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_ARGS,
       toolCallId: "tool2",
       delta: '{"expression":"1+1"}',
     } as ToolCallArgsEvent);
-    events$.next({
+    channel.push({
       type: EventType.TOOL_CALL_END,
       toolCallId: "tool2",
     } as ToolCallEndEvent);
 
-    // Add a small delay to ensure any potential updates would be processed
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    channel.close();
 
-    // Complete the events stream
-    events$.complete();
-
-    // Wait for all state updates
     const stateUpdates = await stateUpdatesPromise;
 
     // Check for expected state updates

@@ -76,7 +76,6 @@
     "openai": "^4.98.0",
     "react": "^19.2.1",
     "react-dom": "^19.2.1",
-    "rxjs": "7.8.1",
     "streamdown": "^1.6.10",
     "tailwind-merge": "^3.3.0",
     "tailwindcss-animate": "^1.0.7",

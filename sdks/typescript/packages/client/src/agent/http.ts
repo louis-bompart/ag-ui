@@ -4,7 +4,6 @@ import { HttpAgentConfig, RunAgentParameters } from "./types";
 import { RunAgentInput, BaseEvent } from "@ag-ui/core";
 import { structuredClone_ } from "@/utils";
 import { transformHttpEventStream } from "@/transform/http";
-import { Observable } from "rxjs";
 import { AgentSubscriber } from "./subscriber";
 
 interface RunHttpAgentConfig extends RunAgentParameters {
@@ -54,7 +53,7 @@ export class HttpAgent extends AbstractAgent {
     this.headers = structuredClone_(config.headers ?? {});
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
+  run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     const httpEvents = runHttpRequest(this.url, this.requestInit(input));
     return transformHttpEventStream(httpEvents);
   }

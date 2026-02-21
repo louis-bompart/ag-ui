@@ -1,7 +1,7 @@
 import { HttpAgent } from "../http";
 import { runHttpRequest, HttpEvent, HttpEventType } from "@/run/http-request";
 import { v4 as uuidv4 } from "uuid";
-import { Observable, of } from "rxjs";
+import { ofAsync } from "@/async-utils";
 import { describe, it, expect, vi, beforeEach, Mock } from "vitest";
 
 // Mock the runHttpRequest module
@@ -20,7 +20,7 @@ vi.mock("uuid", () => ({
 
 // Mock transformHttpEventStream
 vi.mock("@/transform/http", () => ({
-  transformHttpEventStream: vi.fn((source$) => source$),
+  transformHttpEventStream: vi.fn((source) => source),
 }));
 
 describe("HttpAgent", () => {
@@ -30,15 +30,15 @@ describe("HttpAgent", () => {
   });
 
   it("should configure and execute HTTP requests correctly", async () => {
-    // Setup mock observable for the HTTP response
-    const mockObservable = of({
+    // Setup mock async iterable for the HTTP response
+    const mockIterable = ofAsync({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: new Headers(),
     });
 
     // Mock the runHttpRequest function
-    (runHttpRequest as Mock).mockReturnValue(mockObservable);
+    (runHttpRequest as Mock).mockReturnValue(mockIterable);
 
     // Configure test agent
     const agent = new HttpAgent({
@@ -87,7 +87,7 @@ describe("HttpAgent", () => {
 
   it("should abort the request when abortRun is called", () => {
     // Setup mock implementation
-    (runHttpRequest as Mock).mockReturnValue(of());
+    (runHttpRequest as Mock).mockReturnValue(ofAsync());
 
     // Configure test agent
     const agent = new HttpAgent({
@@ -113,7 +113,7 @@ describe("HttpAgent", () => {
 
   it("should use a custom abort controller when provided", () => {
     // Setup mock implementation
-    (runHttpRequest as Mock).mockReturnValue(of());
+    (runHttpRequest as Mock).mockReturnValue(ofAsync());
 
     // Configure test agent
     const agent = new HttpAgent({
@@ -153,13 +153,13 @@ describe("HttpAgent", () => {
 
     // Verify that the HttpAgent's run method uses transformHttpEventStream
     // This is an indirect test of implementation details, but useful to verify the pipeline
-    const mockObservable = of({
+    const mockIterable = ofAsync({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: new Headers(),
     });
 
-    (runHttpRequest as Mock).mockReturnValue(mockObservable);
+    (runHttpRequest as Mock).mockReturnValue(mockIterable);
 
     // Call run with mock input
     const input = {
@@ -175,8 +175,8 @@ describe("HttpAgent", () => {
     // Execute the run function
     agent.run(input);
 
-    // Verify that transformHttpEventStream was called with the mock observable
-    expect(transformHttpEventStream).toHaveBeenCalledWith(mockObservable);
+    // Verify that transformHttpEventStream was called with the mock iterable
+    expect(transformHttpEventStream).toHaveBeenCalledWith(mockIterable);
   });
 
   it("should process HTTP response data end-to-end", async () => {
@@ -185,7 +185,7 @@ describe("HttpAgent", () => {
     mockHeaders.append("Content-Type", "text/event-stream");
 
     // Create a mock response data
-    const mockResponseObservable = of(
+    const mockResponseIterable = ofAsync(
       {
         type: HttpEventType.HEADERS,
         status: 200,
@@ -202,7 +202,7 @@ describe("HttpAgent", () => {
     );
 
     // Directly mock runHttpRequest
-    (runHttpRequest as Mock).mockReturnValue(mockResponseObservable);
+    (runHttpRequest as Mock).mockReturnValue(mockResponseIterable);
 
     // Configure test agent
     const agent = new HttpAgent({

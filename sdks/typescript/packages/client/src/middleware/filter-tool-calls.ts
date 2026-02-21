@@ -9,8 +9,6 @@ import {
   ToolCallEndEvent,
   ToolCallResultEvent,
 } from "@ag-ui/core";
-import { Observable } from "rxjs";
-import { filter } from "rxjs/operators";
 
 type FilterToolCallsConfig =
   | { allowedToolCalls: string[]; disallowedToolCalls?: never }
@@ -40,54 +38,60 @@ export class FilterToolCallsMiddleware extends Middleware {
     }
   }
 
-  run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
+  async *run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
     // Use runNext which already includes transformChunks
-    return this.runNext(input, next).pipe(
-      filter((event) => {
-        // Handle TOOL_CALL_START events
-        if (event.type === EventType.TOOL_CALL_START) {
-          const toolCallStartEvent = event as ToolCallStartEvent;
-          const shouldFilter = this.shouldFilterTool(toolCallStartEvent.toolCallName);
+    for await (const event of this.runNext(input, next)) {
+      // Handle TOOL_CALL_START events
+      if (event.type === EventType.TOOL_CALL_START) {
+        const toolCallStartEvent = event as ToolCallStartEvent;
+        const shouldFilter = this.shouldFilterTool(toolCallStartEvent.toolCallName);
 
-          if (shouldFilter) {
-            // Track this tool call ID as blocked
-            this.blockedToolCallIds.add(toolCallStartEvent.toolCallId);
-            return false; // Filter out this event
-          }
-
-          return true; // Allow this event
+        if (shouldFilter) {
+          // Track this tool call ID as blocked
+          this.blockedToolCallIds.add(toolCallStartEvent.toolCallId);
+          continue; // Filter out this event
         }
 
-        // Handle TOOL_CALL_ARGS events
-        if (event.type === EventType.TOOL_CALL_ARGS) {
-          const toolCallArgsEvent = event as ToolCallArgsEvent;
-          return !this.blockedToolCallIds.has(toolCallArgsEvent.toolCallId);
+        yield event; // Allow this event
+        continue;
+      }
+
+      // Handle TOOL_CALL_ARGS events
+      if (event.type === EventType.TOOL_CALL_ARGS) {
+        const toolCallArgsEvent = event as ToolCallArgsEvent;
+        if (!this.blockedToolCallIds.has(toolCallArgsEvent.toolCallId)) {
+          yield event;
+        }
+        continue;
+      }
+
+      // Handle TOOL_CALL_END events
+      if (event.type === EventType.TOOL_CALL_END) {
+        const toolCallEndEvent = event as ToolCallEndEvent;
+        if (!this.blockedToolCallIds.has(toolCallEndEvent.toolCallId)) {
+          yield event;
+        }
+        continue;
+      }
+
+      // Handle TOOL_CALL_RESULT events
+      if (event.type === EventType.TOOL_CALL_RESULT) {
+        const toolCallResultEvent = event as ToolCallResultEvent;
+        const isBlocked = this.blockedToolCallIds.has(toolCallResultEvent.toolCallId);
+
+        if (isBlocked) {
+          // Clean up the blocked ID after the last event
+          this.blockedToolCallIds.delete(toolCallResultEvent.toolCallId);
+          continue;
         }
 
-        // Handle TOOL_CALL_END events
-        if (event.type === EventType.TOOL_CALL_END) {
-          const toolCallEndEvent = event as ToolCallEndEvent;
-          return !this.blockedToolCallIds.has(toolCallEndEvent.toolCallId);
-        }
+        yield event;
+        continue;
+      }
 
-        // Handle TOOL_CALL_RESULT events
-        if (event.type === EventType.TOOL_CALL_RESULT) {
-          const toolCallResultEvent = event as ToolCallResultEvent;
-          const isBlocked = this.blockedToolCallIds.has(toolCallResultEvent.toolCallId);
-
-          if (isBlocked) {
-            // Clean up the blocked ID after the last event
-            this.blockedToolCallIds.delete(toolCallResultEvent.toolCallId);
-            return false;
-          }
-
-          return true;
-        }
-
-        // Allow all other events through
-        return true;
-      }),
-    );
+      // Allow all other events through
+      yield event;
+    }
   }
 
   private shouldFilterTool(toolName: string): boolean {

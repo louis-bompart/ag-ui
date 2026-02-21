@@ -267,9 +267,6 @@ importers:
       react-dom:
         specifier: ^19.2.1
         version: 19.2.4(react@19.2.4)
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
       streamdown:
         specifier: ^1.6.10
         version: 1.6.11(@types/mdast@4.0.4)(micromark-util-types@2.0.2)(micromark@4.0.2)(react@19.2.4)
@@ -359,9 +356,6 @@ importers:
       '@a2a-js/sdk':
         specifier: ^0.2.2
         version: 0.2.5
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -392,10 +386,6 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   integrations/adk-middleware/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -420,10 +410,6 @@ importers:
         version: 5.9.3
 
   integrations/ag2/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -451,10 +437,6 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   integrations/agno/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -485,10 +467,6 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   integrations/aws-strands/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -519,10 +497,6 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   integrations/community/spring-ai/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -553,10 +527,6 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   integrations/crew-ai/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -591,9 +561,6 @@ importers:
       '@langchain/core':
         specifier: ^0.3.80
         version: 0.3.80(@opentelemetry/api@1.9.0)(openai@6.22.0(ws@8.19.0)(zod@4.3.6))
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -637,9 +604,6 @@ importers:
       partial-json:
         specifier: ^0.1.7
         version: 0.1.7
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -670,10 +634,6 @@ importers:
         version: 4.0.18(@opentelemetry/api@1.9.0)(@types/node@20.19.33)(jiti@2.6.1)(lightningcss@1.31.1)(tsx@4.21.0)(yaml@2.8.2)
 
   integrations/llama-index/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -711,9 +671,6 @@ importers:
       '@copilotkit/runtime':
         specifier: ^1.51.2
         version: 1.51.4(@copilotkit/shared@1.51.4-next.3(@ag-ui/core@sdks+typescript+packages+core))(@copilotkitnext/agent@1.51.4-next.3(@cfworker/json-schema@4.1.1))(@copilotkitnext/runtime@1.51.4-next.3(@ag-ui/client@sdks+typescript+packages+client)(@ag-ui/core@sdks+typescript+packages+core)(@ag-ui/encoder@0.0.45)(@copilotkitnext/shared@1.51.4-next.3))(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0)(zod@4.3.6)))(@langchain/langgraph-sdk@0.1.10(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0)(zod@4.3.6)))(react-dom@19.2.4(react@19.2.4))(react@19.2.4))(@langchain/openai@1.0.0(@langchain/core@0.3.80(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0)(zod@4.3.6)))(ws@8.19.0))(@opentelemetry/api@1.9.0)(openai@4.104.0(ws@8.19.0)(zod@4.3.6))(react-dom@19.2.4(react@19.2.4))(react@19.2.4)
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -781,10 +738,6 @@ importers:
         version: 5.9.3
 
   integrations/pydantic-ai/typescript:
-    dependencies:
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -819,9 +772,6 @@ importers:
       '@ag-ui/client':
         specifier: workspace:*
         version: link:../../../sdks/typescript/packages/client
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.4
@@ -850,9 +800,6 @@ importers:
       '@ag-ui/client':
         specifier: workspace:*
         version: link:../../../sdks/typescript/packages/client
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.4
@@ -881,9 +828,6 @@ importers:
       ai:
         specifier: ^4.3.16
         version: 4.3.19(react@19.2.4)(zod@4.3.6)
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -924,9 +868,6 @@ importers:
       ai:
         specifier: ^4.3.16
         version: 4.3.19(react@19.2.4)(zod@4.3.6)
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
       zod:
         specifier: ^4.3.6
         version: 4.3.6
@@ -961,9 +902,6 @@ importers:
       '@modelcontextprotocol/sdk':
         specifier: ^1.0.0
         version: 1.26.0(@cfworker/json-schema@4.1.1)(zod@4.3.6)
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@ag-ui/client':
         specifier: workspace:*
@@ -995,9 +933,6 @@ importers:
       '@ag-ui/client':
         specifier: workspace:*
         version: link:../../sdks/typescript/packages/client
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
     devDependencies:
       '@arethetypeswrong/cli':
         specifier: ^0.17.4
@@ -1078,9 +1013,6 @@ importers:
       fast-json-patch:
         specifier: ^3.1.1
         version: 3.1.1
-      rxjs:
-        specifier: 7.8.1
-        version: 7.8.1
       untruncate-json:
         specifier: ^0.0.1
         version: 0.0.1

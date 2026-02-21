@@ -1,6 +1,5 @@
 import { convertToLegacyEvents } from "../convert";
-import { of } from "rxjs";
-import { toArray } from "rxjs/operators";
+import { ofAsync, collectAsync } from "@/async-utils";
 import {
   BaseEvent,
   EventType,
@@ -51,13 +50,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(5);
     expect(events[0].type).toBe("MetaEvent");
@@ -115,13 +112,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     // Verify intermediate state update
     const stateEvents = events.filter((e) => e.type === "AgentStateMessage");
@@ -172,13 +167,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     const stateEvent = events.find((e) => e.type === "AgentStateMessage");
     expect(stateEvent).toBeDefined();
@@ -225,13 +218,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     const stateEvent = events.find((e) => e.type === "AgentStateMessage");
     expect(stateEvent).toBeDefined();
@@ -275,13 +266,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     const stateEvent = events.find((e) => e.type === "AgentStateMessage");
     expect(stateEvent).toBeDefined();
@@ -325,13 +314,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     const stateEvent = events.find((e) => e.type === "AgentStateMessage");
     expect(stateEvent).toBeDefined();
@@ -406,13 +393,11 @@ describe("convertToLegacyEvents - State Management", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     const stateEvents = events.filter((e) => e.type === "AgentStateMessage");
     expect(stateEvents).toHaveLength(2);

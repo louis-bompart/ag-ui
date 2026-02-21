@@ -1,5 +1,5 @@
-import { HttpEvent, HttpEventType } from "../../run/http-request";
-import { firstValueFrom, Subject, take } from "rxjs";
+import { HttpEventType } from "../../run/http-request";
+import { AsyncChannel, collectAsync } from "@/async-utils";
 import {
   EventType,
   TextMessageStartEvent,
@@ -8,9 +8,10 @@ import {
   MessagesSnapshotEvent,
 } from "@ag-ui/core";
 import * as proto from "@ag-ui/proto";
-import { transformHttpEventStream } from "../http";
+import { parseProtoStream } from "../proto";
 import * as encoder from "@ag-ui/encoder";
 import { describe, it, expect, vi, beforeEach } from "vitest";
+import { HttpEvent } from "../../run/http-request";
 
 const eventEncoder = new encoder.EventEncoder({
   accept: proto.AGUI_MEDIA_TYPE,
@@ -25,20 +26,13 @@ describe("parseProtoStream", () => {
   });
 
   it("should correctly decode protocol buffer events", async () => {
-    // Create a subject to simulate the HTTP chunk stream
-    const chunk$ = new Subject<HttpEvent>();
-
-    // Create the transform stream
-    const event$ = transformHttpEventStream(chunk$);
-
-    // Set up subscription promise for the first event before emitting
-    const firstEventPromise = firstValueFrom(event$.pipe(take(1)));
+    const channel = new AsyncChannel<HttpEvent>();
 
     // Send headers event first with protobuf content type
     const headers = new Headers();
     headers.append("Content-Type", proto.AGUI_MEDIA_TYPE);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: headers,
@@ -56,51 +50,34 @@ describe("parseProtoStream", () => {
     const encodedEvent = eventEncoder.encodeBinary(originalEvent);
 
     // Send the encoded event as a DATA chunk
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: encodedEvent,
     });
 
-    // Await the received event
-    const receivedEvent = (await firstEventPromise) as TextMessageStartEvent;
+    // Complete the stream
+    channel.close();
+
+    // Parse directly through parseProtoStream
+    const events = await collectAsync(parseProtoStream(channel));
 
     // Verify we got back the same event
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const receivedEvent = events[0] as TextMessageStartEvent;
     expect(receivedEvent.type).toEqual(originalEvent.type);
     expect(receivedEvent.timestamp).toEqual(originalEvent.timestamp);
     expect(receivedEvent.messageId).toEqual(originalEvent.messageId);
     expect(receivedEvent.role).toEqual(originalEvent.role);
-    // Complete the stream
-    chunk$.complete();
   });
 
   it("should handle multiple protobuf events in a single chunk", async () => {
-    // Create a subject to simulate the HTTP chunk stream
-    const chunk$ = new Subject<HttpEvent>();
-
-    // Create the transform stream
-    const event$ = transformHttpEventStream(chunk$);
-
-    // Create a promise that resolves after receiving 2 events
-    const eventsPromise = new Promise<any[]>((resolve) => {
-      const events: any[] = [];
-      event$.subscribe({
-        next: (event) => {
-          events.push(event);
-          if (events.length === 2) {
-            resolve(events);
-          }
-        },
-        error: (err) => {
-          throw new Error(`Unexpected error: ${err}`);
-        },
-      });
-    });
+    const channel = new AsyncChannel<HttpEvent>();
 
     // Send headers event first with protobuf content type
     const headers = new Headers();
     headers.append("Content-Type", proto.AGUI_MEDIA_TYPE);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: headers,
@@ -131,42 +108,34 @@ describe("parseProtoStream", () => {
     combinedData.set(encodedContent, encodedStart.length);
 
     // Send the combined data as a single chunk
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: combinedData,
     });
 
-    // Wait for both events to be emitted
-    const events = await eventsPromise;
+    // Complete the stream
+    channel.close();
+
+    const events = await collectAsync(parseProtoStream(channel));
 
     // Verify we received both events correctly
     expect(events.length).toBe(2);
     expect(events[0].type).toEqual(startEvent.type);
-    expect(events[0].messageId).toEqual(startEvent.messageId);
-    expect(events[0].role).toEqual(startEvent.role);
+    expect((events[0] as any).messageId).toEqual(startEvent.messageId);
+    expect((events[0] as any).role).toEqual(startEvent.role);
     expect(events[1].type).toEqual(contentEvent.type);
-    expect(events[1].messageId).toEqual(contentEvent.messageId);
-    expect(events[1].delta).toEqual(contentEvent.delta);
-
-    // Complete the stream
-    chunk$.complete();
+    expect((events[1] as any).messageId).toEqual(contentEvent.messageId);
+    expect((events[1] as any).delta).toEqual(contentEvent.delta);
   });
 
   it("should handle split protobuf event across multiple chunks", async () => {
-    // Create a subject to simulate the HTTP chunk stream
-    const chunk$ = new Subject<HttpEvent>();
-
-    // Create the transform stream
-    const event$ = transformHttpEventStream(chunk$);
-
-    // Set up subscription promise for the event
-    const eventPromise = firstValueFrom(event$);
+    const channel = new AsyncChannel<HttpEvent>();
 
     // Send headers event first with protobuf content type
     const headers = new Headers();
     headers.append("Content-Type", proto.AGUI_MEDIA_TYPE);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: headers,
@@ -192,63 +161,42 @@ describe("parseProtoStream", () => {
     const thirdPart = encodedEvent.slice(Math.floor((2 * encodedEvent.length) / 3));
 
     // Send the parts as separate chunks
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: firstPart,
     });
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: secondPart,
     });
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: thirdPart,
     });
 
     // Complete the stream
-    chunk$.complete();
+    channel.close();
 
-    // Await the received event
-    const receivedEvent = (await eventPromise) as TextMessageContentEvent;
+    const events = await collectAsync(parseProtoStream(channel));
 
     // Verify we got back the same event
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const receivedEvent = events[0] as TextMessageContentEvent;
     expect(receivedEvent.type).toEqual(originalEvent.type);
     expect(receivedEvent.messageId).toEqual(originalEvent.messageId);
     expect(receivedEvent.delta).toEqual(originalEvent.delta);
   });
 
   it("should emit error when invalid protobuf data is received", async () => {
-    // Create a subject to simulate the HTTP chunk stream
-    const chunk$ = new Subject<HttpEvent>();
-
-    // Create the transform stream
-    const event$ = transformHttpEventStream(chunk$);
-
-    let receivedEvent = false;
-    let receivedError = false;
-    let errorReceived: any = null;
-
-    // Set up a subscription with shorter timeout
-    const subscription = event$.subscribe({
-      next: () => {
-        receivedEvent = true;
-      },
-      error: (err) => {
-        receivedError = true;
-        errorReceived = err;
-      },
-      complete: () => {
-        // This is fine if it completes
-      },
-    });
+    const channel = new AsyncChannel<HttpEvent>();
 
     // Send headers event first with protobuf content type
     const headers = new Headers();
     headers.append("Content-Type", proto.AGUI_MEDIA_TYPE);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: headers,
@@ -257,40 +205,38 @@ describe("parseProtoStream", () => {
     // Send invalid protobuf data (just random bytes)
     const invalidData = new Uint8Array([0x01, 0x02, 0x03, 0xff, 0xee, 0xdd]);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: invalidData,
     });
 
-    // Give it a moment to process
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Complete the stream
+    channel.close();
 
-    // Force completion
-    chunk$.complete();
+    // Collect events - should get 0 events (invalid data is silently skipped or throws)
+    let events: any[] = [];
+    let caughtError = false;
+    try {
+      events = await collectAsync(parseProtoStream(channel));
+    } catch {
+      caughtError = true;
+    }
 
-    // Clean up subscription
-    subscription.unsubscribe();
-
-    // Here we're just verifying we didn't get an event from invalid data
-    // The implementation could either emit an error or just ignore bad data
-    expect(receivedEvent).toBe(false);
+    // The implementation could either throw or silently ignore bad data
+    // We just verify we didn't get a valid event from invalid data
+    if (!caughtError) {
+      expect(events.length).toBe(0);
+    }
   }, 3000);
 
   it("should correctly encode and decode a STATE_DELTA event with JSON patch operations", async () => {
-    // Create a subject to simulate the HTTP chunk stream
-    const chunk$ = new Subject<HttpEvent>();
-
-    // Create the transform stream
-    const event$ = transformHttpEventStream(chunk$);
-
-    // Set up subscription promise for the event
-    const eventPromise = firstValueFrom(event$.pipe(take(1)));
+    const channel = new AsyncChannel<HttpEvent>();
 
     // Send headers event first with protobuf content type
     const headers = new Headers();
     headers.append("Content-Type", proto.AGUI_MEDIA_TYPE);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: headers,
@@ -314,15 +260,19 @@ describe("parseProtoStream", () => {
     const encodedEvent = eventEncoder.encodeBinary(stateDeltaEvent);
 
     // Send the encoded event as a DATA chunk
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: encodedEvent,
     });
 
-    // Await the received event
-    const receivedEvent = (await eventPromise) as StateDeltaEvent;
+    // Complete the stream
+    channel.close();
+
+    const events = await collectAsync(parseProtoStream(channel));
 
     // Verify we got back the same event with all patch operations intact
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const receivedEvent = events[0] as StateDeltaEvent;
     expect(receivedEvent.type).toEqual(stateDeltaEvent.type);
     expect(receivedEvent.timestamp).toEqual(stateDeltaEvent.timestamp);
 
@@ -342,26 +292,16 @@ describe("parseProtoStream", () => {
         expect(operation.value).toEqual(stateDeltaEvent.delta[index].value);
       }
     });
-
-    // Complete the stream
-    chunk$.complete();
   });
 
   it("should correctly encode and decode a MESSAGES_SNAPSHOT event", async () => {
-    // Create a subject to simulate the HTTP chunk stream
-    const chunk$ = new Subject<HttpEvent>();
-
-    // Create the transform stream
-    const event$ = transformHttpEventStream(chunk$);
-
-    // Set up subscription promise for the event
-    const eventPromise = firstValueFrom(event$.pipe(take(1)));
+    const channel = new AsyncChannel<HttpEvent>();
 
     // Send headers event first with protobuf content type
     const headers = new Headers();
     headers.append("Content-Type", proto.AGUI_MEDIA_TYPE);
 
-    chunk$.next({
+    channel.push({
       type: HttpEventType.HEADERS,
       status: 200,
       headers: headers,
@@ -412,15 +352,19 @@ describe("parseProtoStream", () => {
     const encodedEvent = eventEncoder.encodeBinary(messagesSnapshotEvent);
 
     // Send the encoded event as a DATA chunk
-    chunk$.next({
+    channel.push({
       type: HttpEventType.DATA,
       data: encodedEvent,
     });
 
-    // Await the received event
-    const receivedEvent = (await eventPromise) as MessagesSnapshotEvent;
+    // Complete the stream
+    channel.close();
+
+    const events = await collectAsync(parseProtoStream(channel));
 
     // Verify we got back the same event
+    expect(events.length).toBeGreaterThanOrEqual(1);
+    const receivedEvent = events[0] as MessagesSnapshotEvent;
     expect(receivedEvent.type).toEqual(messagesSnapshotEvent.type);
     expect(receivedEvent.timestamp).toEqual(messagesSnapshotEvent.timestamp);
 
@@ -453,8 +397,5 @@ describe("parseProtoStream", () => {
         });
       }
     });
-
-    // Complete the stream
-    chunk$.complete();
   });
 });

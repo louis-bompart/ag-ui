@@ -1,6 +1,6 @@
 import { AbstractAgent } from "../agent";
 import { BaseEvent, EventType, Message, RunAgentInput, TextMessageStartEvent, TextMessageContentEvent, TextMessageEndEvent, TextMessageChunkEvent, RunStartedEvent, RunFinishedEvent, Role } from "@ag-ui/core";
-import { Observable, of } from "rxjs";
+import { ofAsync } from "@/async-utils";
 
 describe("AbstractAgent text message roles", () => {
   class TestAgent extends AbstractAgent {
@@ -10,8 +10,8 @@ describe("AbstractAgent text message roles", () => {
       this.events = events;
     }
 
-    run(input: RunAgentInput): Observable<BaseEvent> {
-      return of(...this.events);
+    run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+      return ofAsync(...this.events);
     }
   }
 

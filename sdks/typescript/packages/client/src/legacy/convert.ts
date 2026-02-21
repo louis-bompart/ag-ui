@@ -1,6 +1,3 @@
-import { mergeMap } from "rxjs/operators";
-import * as jsonpatch from "fast-json-patch";
-
 import {
   BaseEvent,
   EventType,
@@ -20,7 +17,6 @@ import {
   ToolCall,
   RunErrorEvent,
 } from "@ag-ui/core";
-import { Observable } from "rxjs";
 import {
   LegacyTextMessageStart,
   LegacyTextMessageContent,
@@ -40,6 +36,7 @@ import {
   LegacyRunError
 } from "./types";
 import untruncateJson from "untruncate-json";
+import * as fastJsonPatch from "fast-json-patch";
 
 const flattenMessageContentToText = (content: Message["content"]) => {
   if (typeof content === "string") {
@@ -70,7 +67,7 @@ interface PredictStateValue {
 
 export const convertToLegacyEvents =
   (threadId: string, runId: string, agentName: string) =>
-  (events$: Observable<BaseEvent>): Observable<LegacyRuntimeProtocolEvent> => {
+  async function* (events: AsyncIterable<BaseEvent>): AsyncIterable<LegacyRuntimeProtocolEvent> {
     let currentState: any = {};
     let running = true;
     let active = true;
@@ -90,37 +87,33 @@ export const convertToLegacyEvents =
       }
     };
 
-    return events$.pipe(
-      mergeMap((event) => {
+    for await (const event of events) {
         switch (event.type) {
           case EventType.TEXT_MESSAGE_START: {
             const startEvent = event as TextMessageStartEvent;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.TextMessageStart,
                 messageId: startEvent.messageId,
                 role: startEvent.role,
-              } as LegacyTextMessageStart,
-            ];
+              } as LegacyTextMessageStart;
+            break;
           }
           case EventType.TEXT_MESSAGE_CONTENT: {
             const contentEvent = event as TextMessageContentEvent;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.TextMessageContent,
                 messageId: contentEvent.messageId,
                 content: contentEvent.delta,
-              } as LegacyTextMessageContent,
-            ];
+              } as LegacyTextMessageContent;
+            break;
           }
           case EventType.TEXT_MESSAGE_END: {
             const endEvent = event as TextMessageEndEvent;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.TextMessageEnd,
                 messageId: endEvent.messageId,
-              } as LegacyTextMessageEnd,
-            ];
+              } as LegacyTextMessageEnd;
+            break;
           }
           case EventType.TOOL_CALL_START: {
             const startEvent = event as ToolCallStartEvent;
@@ -137,14 +130,13 @@ export const convertToLegacyEvents =
             active = true;
             toolCallNames[startEvent.toolCallId] = startEvent.toolCallName;
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.ActionExecutionStart,
                 actionExecutionId: startEvent.toolCallId,
                 actionName: startEvent.toolCallName,
                 parentMessageId: startEvent.parentMessageId,
-              } as LegacyActionExecutionStart,
-            ];
+              } as LegacyActionExecutionStart;
+            break;
           }
           case EventType.TOOL_CALL_ARGS: {
             const argsEvent = event as ToolCallArgsEvent;
@@ -153,7 +145,7 @@ export const convertToLegacyEvents =
             const currentToolCall = currentToolCalls.find((tc) => tc.id === argsEvent.toolCallId);
             if (!currentToolCall) {
               console.warn(`TOOL_CALL_ARGS: No tool call found with ID '${argsEvent.toolCallId}'`);
-              return [];
+              break;
             }
 
             currentToolCall.function.arguments += argsEvent.delta;
@@ -190,52 +182,47 @@ export const convertToLegacyEvents =
               }
             }
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.ActionExecutionArgs,
                 actionExecutionId: argsEvent.toolCallId,
                 args: argsEvent.delta,
-              } as LegacyActionExecutionArgs,
-              ...(didUpdateState
-                ? [
-                    {
-                      type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
-                      threadId,
-                      agentName,
-                      nodeName,
-                      runId,
-                      running,
-                      role: "assistant",
-                      state: JSON.stringify(currentState),
-                      active,
-                    },
-                  ]
-                : []),
-            ];
+              } as LegacyActionExecutionArgs;
+            if (didUpdateState) {
+              yield {
+                    type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
+                    threadId,
+                    agentName,
+                    nodeName,
+                    runId,
+                    running,
+                    role: "assistant",
+                    state: JSON.stringify(currentState),
+                    active,
+                  } as LegacyAgentStateMessage;
+            }
+            break;
           }
           case EventType.TOOL_CALL_END: {
             const endEvent = event as ToolCallEndEvent;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.ActionExecutionEnd,
                 actionExecutionId: endEvent.toolCallId,
-              } as LegacyActionExecutionEnd,
-            ];
+              } as LegacyActionExecutionEnd;
+            break;
           }
           case EventType.TOOL_CALL_RESULT: {
             const resultEvent = event as ToolCallResultEvent;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.ActionExecutionResult,
                 actionExecutionId: resultEvent.toolCallId,
                 result: resultEvent.content,
                 actionName: toolCallNames[resultEvent.toolCallId] || "unknown",
-              } as LegacyActionExecutionResult,
-            ];
+              } as LegacyActionExecutionResult;
+            break;
           }
           case EventType.RAW: {
             // The legacy protocol doesn't support raw events
-            return [];
+            break;
           }
           case EventType.CUSTOM: {
             const customEvent = event as CustomEvent;
@@ -248,20 +235,18 @@ export const convertToLegacyEvents =
                 break;
             }
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.MetaEvent,
                 name: customEvent.name,
                 value: customEvent.value,
-              } as LegacyMetaEvent,
-            ];
+              } as LegacyMetaEvent;
+            break;
           }
           case EventType.STATE_SNAPSHOT: {
             const stateEvent = event as StateSnapshotEvent;
             updateCurrentState(stateEvent.snapshot);
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
                 threadId,
                 agentName,
@@ -271,19 +256,18 @@ export const convertToLegacyEvents =
                 role: "assistant",
                 state: JSON.stringify(currentState),
                 active,
-              } as LegacyAgentStateMessage,
-            ];
+              } as LegacyAgentStateMessage;
+            break;
           }
           case EventType.STATE_DELTA: {
             const deltaEvent = event as StateDeltaEvent;
-            const result = jsonpatch.applyPatch(currentState, deltaEvent.delta, true, false);
+            const result = fastJsonPatch.applyPatch(currentState, deltaEvent.delta, true, false);
             if (!result) {
-              return [];
+              break;
             }
             updateCurrentState(result.newDocument);
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
                 threadId,
                 agentName,
@@ -293,14 +277,13 @@ export const convertToLegacyEvents =
                 role: "assistant",
                 state: JSON.stringify(currentState),
                 active,
-              } as LegacyAgentStateMessage,
-            ];
+              } as LegacyAgentStateMessage;
+            break;
           }
           case EventType.MESSAGES_SNAPSHOT: {
             const messagesSnapshot = event as MessagesSnapshotEvent;
             syncedMessages = messagesSnapshot.messages;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
                 threadId,
                 agentName,
@@ -313,12 +296,12 @@ export const convertToLegacyEvents =
                   ...(syncedMessages ? { messages: syncedMessages } : {}),
                 }),
                 active: true,
-              } as LegacyAgentStateMessage,
-            ];
+              } as LegacyAgentStateMessage;
+            break;
           }
           case EventType.RUN_STARTED: {
             // There is nothing to do in the legacy protocol
-            return [];
+            break;
           }
           case EventType.RUN_FINISHED: {
             if (syncedMessages) {
@@ -327,11 +310,10 @@ export const convertToLegacyEvents =
 
             // Only do an update if state is not empty
             if (Object.keys(currentState).length === 0) {
-              return [];
+              break;
             }
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
                 threadId,
                 agentName,
@@ -348,18 +330,17 @@ export const convertToLegacyEvents =
                     : {}),
                 }),
                 active: false,
-              } as LegacyAgentStateMessage,
-            ];
+              } as LegacyAgentStateMessage;
+            break;
           }
           case EventType.RUN_ERROR: {
             const errorEvent = event as RunErrorEvent;
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.RunError,
                 message: errorEvent.message,
                 code: errorEvent.code,
-              } as LegacyRunError,
-            ];
+              } as LegacyRunError;
+            break;
           }
           case EventType.STEP_STARTED: {
             const stepStarted = event as StepStartedEvent;
@@ -368,8 +349,7 @@ export const convertToLegacyEvents =
             currentToolCalls = [];
             predictState = null;
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
                 threadId,
                 agentName,
@@ -379,15 +359,14 @@ export const convertToLegacyEvents =
                 role: "assistant",
                 state: JSON.stringify(currentState),
                 active: true,
-              } as LegacyAgentStateMessage,
-            ];
+              } as LegacyAgentStateMessage;
+            break;
           }
           case EventType.STEP_FINISHED: {
             currentToolCalls = [];
             predictState = null;
 
-            return [
-              {
+            yield {
                 type: LegacyRuntimeEventTypes.def.entries.AgentStateMessage,
                 threadId,
                 agentName,
@@ -397,15 +376,14 @@ export const convertToLegacyEvents =
                 role: "assistant",
                 state: JSON.stringify(currentState),
                 active: false,
-              } as LegacyAgentStateMessage,
-            ];
+              } as LegacyAgentStateMessage;
+            break;
           }
           default: {
-            return [];
+            break;
           }
         }
-      }),
-    );
+    }
   };
 
 export function convertMessagesToLegacyFormat(messages: Message[]): LegacyMessage[] {

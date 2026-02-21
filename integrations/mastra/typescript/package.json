@@ -45,8 +45,7 @@
     "unlink:global": "pnpm unlink --global"
   },
   "dependencies": {
-    "@ai-sdk/ui-utils": "^1.1.19",
-    "rxjs": "7.8.1"
+    "@ai-sdk/ui-utils": "^1.1.19"
   },
   "peerDependencies": {
     "@ag-ui/core": ">=0.0.44",

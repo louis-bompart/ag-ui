@@ -1,4 +1,3 @@
-import { mergeMap, Observable, finalize } from "rxjs";
 import {
   BaseEvent,
   TextMessageChunkEvent,
@@ -32,7 +31,7 @@ interface ReasoningMessageFields {
 
 export const transformChunks =
   (debug: boolean) =>
-  (events$: Observable<BaseEvent>): Observable<BaseEvent> => {
+  async function* (events: AsyncIterable<BaseEvent>): AsyncIterable<BaseEvent> {
     let textMessageFields: TextMessageFields | undefined;
     let toolCallFields: ToolCallFields | undefined;
     let reasoningMessageFields: ReasoningMessageFields | undefined;
@@ -92,7 +91,7 @@ export const transformChunks =
       return event;
     };
 
-    const closePendingEvent = () => {
+    const closePendingEvent = (): BaseEvent[] => {
       if (mode === "text") {
         return [closeTextMessage()];
       }
@@ -105,8 +104,8 @@ export const transformChunks =
       return [];
     };
 
-    return events$.pipe(
-      mergeMap((event) => {
+    try {
+      for await (const event of events) {
         switch (event.type) {
           case EventType.TEXT_MESSAGE_START:
           case EventType.TEXT_MESSAGE_CONTENT:
@@ -134,15 +133,16 @@ export const transformChunks =
           case EventType.REASONING_MESSAGE_CONTENT:
           case EventType.REASONING_MESSAGE_END:
           case EventType.REASONING_END:
-            return [...closePendingEvent(), event];
+            yield* [...closePendingEvent(), event];
+            break;
           case EventType.RAW:
           case EventType.ACTIVITY_SNAPSHOT:
           case EventType.ACTIVITY_DELTA:
           case EventType.REASONING_ENCRYPTED_VALUE:
-            return [event];
-          case EventType.TEXT_MESSAGE_CHUNK:
+            yield event;
+            break;
+          case EventType.TEXT_MESSAGE_CHUNK: {
             const messageChunkEvent = event as TextMessageChunkEvent;
-            const textMessageResult = [];
             if (
               // we are not in a text message
               mode !== "text" ||
@@ -151,7 +151,7 @@ export const transformChunks =
                 messageChunkEvent.messageId !== textMessageFields?.messageId)
             ) {
               // close the current message if any
-              textMessageResult.push(...closePendingEvent());
+              yield* closePendingEvent();
             }
 
             // we are not in a text message, start a new one
@@ -171,7 +171,7 @@ export const transformChunks =
                 role: messageChunkEvent.role || "assistant",
               } as TextMessageStartEvent;
 
-              textMessageResult.push(textMessageStartEvent);
+              yield textMessageStartEvent;
 
               if (debug) {
                 console.debug(
@@ -188,7 +188,7 @@ export const transformChunks =
                 delta: messageChunkEvent.delta,
               } as TextMessageContentEvent;
 
-              textMessageResult.push(textMessageContentEvent);
+              yield textMessageContentEvent;
 
               if (debug) {
                 console.debug(
@@ -197,20 +197,19 @@ export const transformChunks =
                 );
               }
             }
-
-            return textMessageResult;
-          case EventType.TOOL_CALL_CHUNK:
+            break;
+          }
+          case EventType.TOOL_CALL_CHUNK: {
             const toolCallChunkEvent = event as ToolCallChunkEvent;
-            const toolMessageResult = [];
             if (
-              // we are not in a text message
+              // we are not in a tool call
               mode !== "tool" ||
               // or the tool call id is different
               (toolCallChunkEvent.toolCallId !== undefined &&
                 toolCallChunkEvent.toolCallId !== toolCallFields?.toolCallId)
             ) {
               // close the current message if any
-              toolMessageResult.push(...closePendingEvent());
+              yield* closePendingEvent();
             }
 
             if (mode !== "tool") {
@@ -234,7 +233,7 @@ export const transformChunks =
                 parentMessageId: toolCallChunkEvent.parentMessageId,
               } as ToolCallStartEvent;
 
-              toolMessageResult.push(toolCallStartEvent);
+              yield toolCallStartEvent;
 
               if (debug) {
                 console.debug("[TRANSFORM]: TOOL_CALL_START", JSON.stringify(toolCallStartEvent));
@@ -248,17 +247,16 @@ export const transformChunks =
                 delta: toolCallChunkEvent.delta,
               } as ToolCallArgsEvent;
 
-              toolMessageResult.push(toolCallArgsEvent);
+              yield toolCallArgsEvent;
 
               if (debug) {
                 console.debug("[TRANSFORM]: TOOL_CALL_ARGS", JSON.stringify(toolCallArgsEvent));
               }
             }
-
-            return toolMessageResult;
-          case EventType.REASONING_MESSAGE_CHUNK:
+            break;
+          }
+          case EventType.REASONING_MESSAGE_CHUNK: {
             const reasoningChunkEvent = event as ReasoningMessageChunkEvent;
-            const reasoningMessageResult = [];
             if (
               // we are not in a reasoning message
               mode !== "reasoning" ||
@@ -267,7 +265,7 @@ export const transformChunks =
                 reasoningChunkEvent.messageId !== reasoningMessageFields?.messageId)
             ) {
               // close the current message if any
-              reasoningMessageResult.push(...closePendingEvent());
+              yield* closePendingEvent();
             }
 
             // we are not in a reasoning message, start a new one
@@ -285,7 +283,7 @@ export const transformChunks =
                 type: EventType.REASONING_MESSAGE_START,
                 messageId: reasoningChunkEvent.messageId,
               } as ReasoningMessageStartEvent;
-              reasoningMessageResult.push(reasoningMessageStartEvent);
+              yield reasoningMessageStartEvent;
 
               if (debug) {
                 console.debug(
@@ -302,7 +300,7 @@ export const transformChunks =
                 delta: reasoningChunkEvent.delta,
               } as ReasoningMessageContentEvent;
 
-              reasoningMessageResult.push(reasoningMessageContentEvent);
+              yield reasoningMessageContentEvent;
 
               if (debug) {
                 console.debug(
@@ -311,15 +309,12 @@ export const transformChunks =
                 );
               }
             }
-
-            return reasoningMessageResult;
+            break;
+          }
         }
-        const _exhaustiveCheck: never = event.type;
-        return [];
-      }),
-      finalize(() => {
-        // This ensures that we close any pending events when the source observable completes
-        closePendingEvent();
-      }),
-    );
+      }
+    } finally {
+      // Ensure we close any pending events when the source completes
+      closePendingEvent();
+    }
   };

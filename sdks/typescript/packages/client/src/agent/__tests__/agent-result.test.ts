@@ -14,7 +14,7 @@ import {
   TextMessageContentEvent,
   TextMessageEndEvent,
 } from "@ag-ui/core";
-import { Observable, of, Subject } from "rxjs";
+import { ofAsync, AsyncChannel } from "@/async-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock uuid module
@@ -38,11 +38,11 @@ vi.mock("@/utils", async () => {
 
 // Mock the verify and chunks modules
 vi.mock("@/verify", () => ({
-  verifyEvents: vi.fn(() => (source$: Observable<any>) => source$),
+  verifyEvents: vi.fn(() => (source: AsyncIterable<any>) => source),
 }));
 
 vi.mock("@/chunks", () => ({
-  transformChunks: vi.fn(() => (source$: Observable<any>) => source$),
+  transformChunks: vi.fn(() => (source: AsyncIterable<any>) => source),
 }));
 
 // Helper function to wait for async notifications to complete
@@ -58,23 +58,23 @@ class TestAgent extends AbstractAgent {
     this.eventsToEmit = events;
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return of(...this.eventsToEmit);
+  run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    return ofAsync(...this.eventsToEmit);
   }
 }
 
 class StreamingTestAgent extends AbstractAgent {
-  private eventSubject?: Subject<BaseEvent>;
+  private eventChannel?: AsyncChannel<BaseEvent>;
 
-  setEventSubject(subject: Subject<BaseEvent>) {
-    this.eventSubject = subject;
+  setEventChannel(channel: AsyncChannel<BaseEvent>) {
+    this.eventChannel = channel;
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    if (!this.eventSubject) {
-      throw new Error("eventSubject not set");
+  run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    if (!this.eventChannel) {
+      throw new Error("eventChannel not set");
     }
-    return this.eventSubject.asObservable();
+    return this.eventChannel;
   }
 }
 
@@ -610,14 +610,14 @@ describe("Agent Result", () => {
     });
 
     it("finalizes immediately when detached", async () => {
-      const subject = new Subject<BaseEvent>();
-      streamingAgent.setEventSubject(subject);
+      const channel = new AsyncChannel<BaseEvent>();
+      streamingAgent.setEventChannel(channel);
       const onRunFinalized = vi.fn();
 
       const runPromise = streamingAgent.runAgent({}, { onRunFinalized });
       await waitForAsyncNotifications();
 
-      subject.next({
+      channel.push({
         type: EventType.RUN_STARTED,
         threadId: "thread-detach",
         runId: "run-detach",
@@ -625,21 +625,21 @@ describe("Agent Result", () => {
 
       await streamingAgent.detachActiveRun();
       await runPromise;
-      subject.complete();
+      channel.close();
 
       expect(onRunFinalized).toHaveBeenCalledTimes(1);
     });
 
     it("ignores events emitted after detaching", async () => {
-      const subject = new Subject<BaseEvent>();
-      streamingAgent.setEventSubject(subject);
+      const channel = new AsyncChannel<BaseEvent>();
+      streamingAgent.setEventChannel(channel);
       const onMessagesChanged = vi.fn();
 
       const runPromise = streamingAgent.runAgent({}, { onMessagesChanged });
       await waitForAsyncNotifications();
       const initialMessageCount = streamingAgent.messages.length;
 
-      subject.next({
+      channel.push({
         type: EventType.RUN_STARTED,
         threadId: "thread-detach",
         runId: "run-detach",
@@ -647,22 +647,22 @@ describe("Agent Result", () => {
 
       const detachPromise = streamingAgent.detachActiveRun();
 
-      subject.next({
+      channel.push({
         type: EventType.TEXT_MESSAGE_START,
         messageId: "msg-after-detach",
         role: "assistant",
       } as TextMessageStartEvent);
-      subject.next({
+      channel.push({
         type: EventType.TEXT_MESSAGE_CONTENT,
         messageId: "msg-after-detach",
         delta: "Should be ignored",
       } as TextMessageContentEvent);
-      subject.next({
+      channel.push({
         type: EventType.TEXT_MESSAGE_END,
         messageId: "msg-after-detach",
       } as TextMessageEndEvent);
 
-      subject.complete();
+      channel.close();
       await Promise.all([detachPromise, runPromise]);
 
       expect(streamingAgent.messages.length).toBe(initialMessageCount);
@@ -670,54 +670,54 @@ describe("Agent Result", () => {
     });
 
     it("can start a new run on another thread after detaching", async () => {
-      const firstSubject = new Subject<BaseEvent>();
-      streamingAgent.setEventSubject(firstSubject);
+      const firstChannel = new AsyncChannel<BaseEvent>();
+      streamingAgent.setEventChannel(firstChannel);
 
       const firstRunPromise = streamingAgent.runAgent();
       await waitForAsyncNotifications();
 
-      firstSubject.next({
+      firstChannel.push({
         type: EventType.RUN_STARTED,
         threadId: "thread-detach",
         runId: "run-1",
       } as RunStartedEvent);
 
       await streamingAgent.detachActiveRun();
-      firstSubject.complete();
+      firstChannel.close();
       await firstRunPromise;
 
       streamingAgent.threadId = "thread-detach-2";
-      const secondSubject = new Subject<BaseEvent>();
-      streamingAgent.setEventSubject(secondSubject);
+      const secondChannel = new AsyncChannel<BaseEvent>();
+      streamingAgent.setEventChannel(secondChannel);
 
       const secondRunPromise = streamingAgent.runAgent();
       await waitForAsyncNotifications();
 
-      secondSubject.next({
+      secondChannel.push({
         type: EventType.RUN_STARTED,
         threadId: "thread-detach-2",
         runId: "run-2",
       } as RunStartedEvent);
-      secondSubject.next({
+      secondChannel.push({
         type: EventType.TEXT_MESSAGE_START,
         messageId: "msg-new",
         role: "assistant",
       } as TextMessageStartEvent);
-      secondSubject.next({
+      secondChannel.push({
         type: EventType.TEXT_MESSAGE_CONTENT,
         messageId: "msg-new",
         delta: "hello",
       } as TextMessageContentEvent);
-      secondSubject.next({
+      secondChannel.push({
         type: EventType.TEXT_MESSAGE_END,
         messageId: "msg-new",
       } as TextMessageEndEvent);
-      secondSubject.next({
+      secondChannel.push({
         type: EventType.RUN_FINISHED,
         threadId: "thread-detach-2",
         runId: "run-2",
       } as RunFinishedEvent);
-      secondSubject.complete();
+      secondChannel.close();
 
       await secondRunPromise;
       await waitForAsyncNotifications();
@@ -726,8 +726,8 @@ describe("Agent Result", () => {
     });
 
     it("resolve order: detachActiveRun waits for finalize", async () => {
-      const subject = new Subject<BaseEvent>();
-      streamingAgent.setEventSubject(subject);
+      const channel = new AsyncChannel<BaseEvent>();
+      streamingAgent.setEventChannel(channel);
       const order: string[] = [];
 
       const runPromise = streamingAgent.runAgent(
@@ -740,14 +740,14 @@ describe("Agent Result", () => {
       );
       await waitForAsyncNotifications();
 
-      subject.next({
+      channel.push({
         type: EventType.RUN_STARTED,
         threadId: "thread-detach",
         runId: "run-order",
       } as RunStartedEvent);
 
       const detachPromise = streamingAgent.detachActiveRun().then(() => order.push("awaited"));
-      subject.complete();
+      channel.close();
 
       await Promise.all([runPromise, detachPromise]);
 

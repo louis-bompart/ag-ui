@@ -16,7 +16,6 @@ import {
   ToolCall,
   ToolMessage,
 } from "@ag-ui/client";
-import { Observable } from "rxjs";
 import {
   CoreMessage,
   LanguageModelV1,
@@ -109,115 +108,149 @@ export class VercelAISDKAgent extends AbstractAgent {
     return new VercelAISDKAgent(this.config);
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     const finalMessages: Message[] = input.messages;
 
-    return new Observable<ProcessedEvent>((subscriber) => {
-      subscriber.next({
-        type: EventType.RUN_STARTED,
-        threadId: input.threadId,
-        runId: input.runId,
-      } as RunStartedEvent);
+    // Event channel for bridging callback-based processDataStream to async iterable
+    const pending: BaseEvent[] = [];
+    let waitResolve: (() => void) | null = null;
+    let streamDone = false;
+    let streamError: unknown = null;
 
-      const response = streamText({
-        model: this.model,
-        messages: convertMessagesToVercelAISDKMessages(input.messages),
-        tools: convertToolToVerlAISDKTools(input.tools),
-        maxSteps: this.maxSteps,
-        toolChoice: this.toolChoice,
-      });
+    const push = (event: BaseEvent) => {
+      if (streamDone) return;
+      pending.push(event);
+      if (waitResolve) { waitResolve(); waitResolve = null; }
+    };
+    const complete = () => {
+      if (streamDone) return;
+      streamDone = true;
+      if (waitResolve) { waitResolve(); waitResolve = null; }
+    };
+    const fail = (err: unknown) => {
+      if (streamDone) return;
+      streamError = err;
+      streamDone = true;
+      if (waitResolve) { waitResolve(); waitResolve = null; }
+    };
 
-      let messageId = randomUUID();
-      let assistantMessage: AssistantMessage = {
-        id: messageId,
-        role: "assistant",
-        content: "",
-        toolCalls: [],
-      };
-      finalMessages.push(assistantMessage);
+    push({
+      type: EventType.RUN_STARTED,
+      threadId: input.threadId,
+      runId: input.runId,
+    } as RunStartedEvent);
 
-      processDataStream({
-        stream: response.toDataStreamResponse().body!,
-        onTextPart: (text) => {
-          assistantMessage.content += text;
-          const event: TextMessageChunkEvent = {
-            type: EventType.TEXT_MESSAGE_CHUNK,
-            role: "assistant",
-            messageId,
-            delta: text,
-          };
-          subscriber.next(event);
-        },
-        onFinishMessagePart: () => {
-          // Emit message snapshot
-          const event: MessagesSnapshotEvent = {
-            type: EventType.MESSAGES_SNAPSHOT,
-            messages: finalMessages,
-          };
-          subscriber.next(event);
-
-          // Emit run finished event
-          subscriber.next({
-            type: EventType.RUN_FINISHED,
-            threadId: input.threadId,
-            runId: input.runId,
-          } as RunFinishedEvent);
-
-          // Complete the observable
-          subscriber.complete();
-        },
-        onToolCallPart(streamPart) {
-          let toolCall: ToolCall = {
-            id: streamPart.toolCallId,
-            type: "function",
-            function: {
-              name: streamPart.toolName,
-              arguments: JSON.stringify(streamPart.args),
-            },
-          };
-          assistantMessage.toolCalls!.push(toolCall);
-
-          const startEvent: ToolCallStartEvent = {
-            type: EventType.TOOL_CALL_START,
-            parentMessageId: messageId,
-            toolCallId: streamPart.toolCallId,
-            toolCallName: streamPart.toolName,
-          };
-          subscriber.next(startEvent);
-
-          const argsEvent: ToolCallArgsEvent = {
-            type: EventType.TOOL_CALL_ARGS,
-            toolCallId: streamPart.toolCallId,
-            delta: JSON.stringify(streamPart.args),
-          };
-          subscriber.next(argsEvent);
-
-          const endEvent: ToolCallEndEvent = {
-            type: EventType.TOOL_CALL_END,
-            toolCallId: streamPart.toolCallId,
-          };
-          subscriber.next(endEvent);
-        },
-        onToolResultPart(streamPart) {
-          const toolMessage: ToolMessage = {
-            role: "tool",
-            id: randomUUID(),
-            toolCallId: streamPart.toolCallId,
-            content: JSON.stringify(streamPart.result),
-          };
-          finalMessages.push(toolMessage);
-        },
-        onErrorPart(streamPart) {
-          subscriber.error(streamPart);
-        },
-      }).catch((error) => {
-        console.error("catch error", error);
-        // Handle error
-        subscriber.error(error);
-      });
-
-      return () => {};
+    const response = streamText({
+      model: this.model,
+      messages: convertMessagesToVercelAISDKMessages(input.messages),
+      tools: convertToolToVerlAISDKTools(input.tools),
+      maxSteps: this.maxSteps,
+      toolChoice: this.toolChoice,
     });
+
+    let messageId = randomUUID();
+    let assistantMessage: AssistantMessage = {
+      id: messageId,
+      role: "assistant",
+      content: "",
+      toolCalls: [],
+    };
+    finalMessages.push(assistantMessage);
+
+    const streamPromise = processDataStream({
+      stream: response.toDataStreamResponse().body!,
+      onTextPart: (text) => {
+        assistantMessage.content += text;
+        const event: TextMessageChunkEvent = {
+          type: EventType.TEXT_MESSAGE_CHUNK,
+          role: "assistant",
+          messageId,
+          delta: text,
+        };
+        push(event);
+      },
+      onFinishMessagePart: () => {
+        // Emit message snapshot
+        const event: MessagesSnapshotEvent = {
+          type: EventType.MESSAGES_SNAPSHOT,
+          messages: finalMessages,
+        };
+        push(event);
+
+        // Emit run finished event
+        push({
+          type: EventType.RUN_FINISHED,
+          threadId: input.threadId,
+          runId: input.runId,
+        } as RunFinishedEvent);
+
+        // Signal completion
+        complete();
+      },
+      onToolCallPart(streamPart) {
+        let toolCall: ToolCall = {
+          id: streamPart.toolCallId,
+          type: "function",
+          function: {
+            name: streamPart.toolName,
+            arguments: JSON.stringify(streamPart.args),
+          },
+        };
+        assistantMessage.toolCalls!.push(toolCall);
+
+        const startEvent: ToolCallStartEvent = {
+          type: EventType.TOOL_CALL_START,
+          parentMessageId: messageId,
+          toolCallId: streamPart.toolCallId,
+          toolCallName: streamPart.toolName,
+        };
+        push(startEvent);
+
+        const argsEvent: ToolCallArgsEvent = {
+          type: EventType.TOOL_CALL_ARGS,
+          toolCallId: streamPart.toolCallId,
+          delta: JSON.stringify(streamPart.args),
+        };
+        push(argsEvent);
+
+        const endEvent: ToolCallEndEvent = {
+          type: EventType.TOOL_CALL_END,
+          toolCallId: streamPart.toolCallId,
+        };
+        push(endEvent);
+      },
+      onToolResultPart(streamPart) {
+        const toolMessage: ToolMessage = {
+          role: "tool",
+          id: randomUUID(),
+          toolCallId: streamPart.toolCallId,
+          content: JSON.stringify(streamPart.result),
+        };
+        finalMessages.push(toolMessage);
+      },
+      onErrorPart(streamPart) {
+        fail(streamPart);
+      },
+    }).catch((error) => {
+      console.error("catch error", error);
+      fail(error);
+    });
+
+    // Drain events as they arrive from the background stream
+    try {
+      while (true) {
+        while (pending.length > 0) {
+          yield pending.shift()!;
+        }
+        if (streamDone) {
+          if (streamError) throw streamError;
+          return;
+        }
+        await new Promise<void>((r) => { waitResolve = r; });
+      }
+    } finally {
+      await streamPromise;
+    }
   }
 }
 

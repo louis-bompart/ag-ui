@@ -72,7 +72,7 @@ For more complex scenarios requiring state or configuration, use class-based mid
 ```typescript
 import { Middleware } from "@ag-ui/client"
 import { Observable } from "rxjs"
-import { tap } from "rxjs/operators"
+import { tap } from "rxjs"
 
 class MetricsMiddleware extends Middleware {
   private eventCount = 0

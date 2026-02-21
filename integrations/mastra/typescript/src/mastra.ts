@@ -16,7 +16,6 @@ import type { StorageThreadType } from "@mastra/core/memory";
 import type { Agent as LocalMastraAgent } from "@mastra/core/agent";
 import { RequestContext } from "@mastra/core/request-context";
 import { randomUUID } from "@ag-ui/client";
-import { Observable } from "rxjs";
 import type { MastraClient } from "@mastra/client-js";
 import {
   convertAGUIMessagesToMastra,
@@ -68,18 +67,41 @@ export class MastraAgent extends AbstractAgent {
     return new MastraAgent(this.config);
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     let messageId = randomUUID();
 
-    return new Observable<BaseEvent>((subscriber) => {
-      const run = async () => {
+    // Event channel for bridging callback-based streaming to async iterable
+    const pending: BaseEvent[] = [];
+    let waitResolve: (() => void) | null = null;
+    let streamDone = false;
+    let streamError: Error | null = null;
+
+    const push = (event: BaseEvent) => {
+      if (streamDone) return;
+      pending.push(event);
+      if (waitResolve) { waitResolve(); waitResolve = null; }
+    };
+    const complete = () => {
+      if (streamDone) return;
+      streamDone = true;
+      if (waitResolve) { waitResolve(); waitResolve = null; }
+    };
+    const fail = (err: Error) => {
+      if (streamDone) return;
+      streamError = err;
+      streamDone = true;
+      if (waitResolve) { waitResolve(); waitResolve = null; }
+    };
+
+    const runPromise = (async () => {
+      try {
         const runStartedEvent: RunStartedEvent = {
           type: EventType.RUN_STARTED,
           threadId: input.threadId,
           runId: input.runId,
         };
 
-        subscriber.next(runStartedEvent);
+        push(runStartedEvent);
 
         // Handle local agent memory management (from Mastra implementation)
         if (this.isLocalMastraAgent(this.agent)) {
@@ -129,114 +151,125 @@ export class MastraAgent extends AbstractAgent {
           }
         }
 
-        try {
-          await this.streamMastraAgent(input, {
-            onTextPart: (text) => {
-              const event: TextMessageChunkEvent = {
-                type: EventType.TEXT_MESSAGE_CHUNK,
-                role: "assistant",
-                messageId,
-                delta: text,
-              };
-              subscriber.next(event);
-            },
-            onToolCallPart: (streamPart) => {
-              const startEvent: ToolCallStartEvent = {
-                type: EventType.TOOL_CALL_START,
-                parentMessageId: messageId,
-                toolCallId: streamPart.toolCallId,
-                toolCallName: streamPart.toolName,
-              };
-              subscriber.next(startEvent);
+        await this.streamMastraAgent(input, {
+          onTextPart: (text) => {
+            const event: TextMessageChunkEvent = {
+              type: EventType.TEXT_MESSAGE_CHUNK,
+              role: "assistant",
+              messageId,
+              delta: text,
+            };
+            push(event);
+          },
+          onToolCallPart: (streamPart) => {
+            const startEvent: ToolCallStartEvent = {
+              type: EventType.TOOL_CALL_START,
+              parentMessageId: messageId,
+              toolCallId: streamPart.toolCallId,
+              toolCallName: streamPart.toolName,
+            };
+            push(startEvent);
 
-              const argsEvent: ToolCallArgsEvent = {
-                type: EventType.TOOL_CALL_ARGS,
-                toolCallId: streamPart.toolCallId,
-                delta: JSON.stringify(streamPart.args),
-              };
-              subscriber.next(argsEvent);
+            const argsEvent: ToolCallArgsEvent = {
+              type: EventType.TOOL_CALL_ARGS,
+              toolCallId: streamPart.toolCallId,
+              delta: JSON.stringify(streamPart.args),
+            };
+            push(argsEvent);
 
-              const endEvent: ToolCallEndEvent = {
-                type: EventType.TOOL_CALL_END,
-                toolCallId: streamPart.toolCallId,
-              };
-              subscriber.next(endEvent);
-            },
-            onToolResultPart(streamPart) {
-              const toolCallResultEvent: ToolCallResultEvent = {
-                type: EventType.TOOL_CALL_RESULT,
-                toolCallId: streamPart.toolCallId,
-                content: JSON.stringify(streamPart.result),
-                messageId: randomUUID(),
-                role: "tool",
-              };
+            const endEvent: ToolCallEndEvent = {
+              type: EventType.TOOL_CALL_END,
+              toolCallId: streamPart.toolCallId,
+            };
+            push(endEvent);
+          },
+          onToolResultPart(streamPart) {
+            const toolCallResultEvent: ToolCallResultEvent = {
+              type: EventType.TOOL_CALL_RESULT,
+              toolCallId: streamPart.toolCallId,
+              content: JSON.stringify(streamPart.result),
+              messageId: randomUUID(),
+              role: "tool",
+            };
 
-              subscriber.next(toolCallResultEvent);
-            },
-            onFinishMessagePart: async () => {
-              messageId = randomUUID();
-            },
-            onError: (error) => {
-              console.error("error", error);
-              // Handle error
-              subscriber.error(error);
-            },
-            onRunFinished: async () => {
-              if (this.isLocalMastraAgent(this.agent)) {
-                try {
-                  const memory = await this.agent.getMemory({
-                    requestContext: this.requestContext,
-                  });
-                  if (memory) {
-                    const workingMemory = await memory.getWorkingMemory({
-                      resourceId: this.resourceId,
-                      threadId: input.threadId,
-                      memoryConfig: {
-                        workingMemory: {
-                          enabled: true,
-                        },
+            push(toolCallResultEvent);
+          },
+          onFinishMessagePart: async () => {
+            messageId = randomUUID();
+          },
+          onError: (error) => {
+            console.error("error", error);
+            fail(error);
+          },
+          onRunFinished: async () => {
+            if (this.isLocalMastraAgent(this.agent)) {
+              try {
+                const memory = await this.agent.getMemory({
+                  requestContext: this.requestContext,
+                });
+                if (memory) {
+                  const workingMemory = await memory.getWorkingMemory({
+                    resourceId: this.resourceId,
+                    threadId: input.threadId,
+                    memoryConfig: {
+                      workingMemory: {
+                        enabled: true,
                       },
-                    });
+                    },
+                  });
 
-                    if (typeof workingMemory === "string") {
-                      const snapshot = JSON.parse(workingMemory);
+                  if (typeof workingMemory === "string") {
+                    const snapshot = JSON.parse(workingMemory);
 
-                      if (snapshot && !("$schema" in snapshot)) {
-                        const stateSnapshotEvent: StateSnapshotEvent = {
-                          type: EventType.STATE_SNAPSHOT,
-                          snapshot,
-                        };
+                    if (snapshot && !("$schema" in snapshot)) {
+                      const stateSnapshotEvent: StateSnapshotEvent = {
+                        type: EventType.STATE_SNAPSHOT,
+                        snapshot,
+                      };
 
-                        subscriber.next(stateSnapshotEvent);
-                      }
+                      push(stateSnapshotEvent);
                     }
                   }
-                } catch (error) {
-                  console.error("Error sending state snapshot", error);
                 }
+              } catch (error) {
+                console.error("Error sending state snapshot", error);
               }
+            }
 
-              // Emit run finished event
-              subscriber.next({
-                type: EventType.RUN_FINISHED,
-                threadId: input.threadId,
-                runId: input.runId,
-              } as RunFinishedEvent);
+            // Emit run finished event
+            push({
+              type: EventType.RUN_FINISHED,
+              threadId: input.threadId,
+              runId: input.runId,
+            } as RunFinishedEvent);
 
-              // Complete the observable
-              subscriber.complete();
-            },
-          });
-        } catch (error) {
-          console.error("Stream error:", error);
-          subscriber.error(error);
+            // Signal completion
+            complete();
+          },
+        });
+      } catch (error) {
+        console.error("Stream error:", error);
+        fail(error as Error);
+      } finally {
+        complete();
+      }
+    })();
+
+    // Drain events as they arrive from the background stream
+    try {
+      while (true) {
+        while (pending.length > 0) {
+          yield pending.shift()!;
         }
-      };
-
-      run();
-
-      return () => {};
-    });
+        if (streamDone) {
+          if (streamError) throw streamError;
+          return;
+        }
+        await new Promise<void>((r) => { waitResolve = r; });
+      }
+    } finally {
+      await runPromise.catch(() => {});
+    }
   }
 
   isLocalMastraAgent(

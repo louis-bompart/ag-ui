@@ -1,6 +1,3 @@
-import { Observable, from, defer, throwError } from "rxjs";
-import { mergeMap, switchMap } from "rxjs/operators";
-
 export enum HttpEventType {
   HEADERS = "headers",
   DATA = "data",
@@ -19,72 +16,58 @@ export interface HttpHeadersEvent {
 
 export type HttpEvent = HttpDataEvent | HttpHeadersEvent;
 
-export const runHttpRequest = (url: string, requestInit: RequestInit): Observable<HttpEvent> => {
-  // Defer the fetch so that it's executed when subscribed to
-  return defer(() => from(fetch(url, requestInit))).pipe(
-    switchMap((response) => {
-      if (!response.ok) {
-        const contentType = response.headers.get("content-type") || "";
-        // Read the (small) error body once, then error the stream
-        return from(response.text()).pipe(
-          mergeMap((text) => {
-            let payload: unknown = text;
-            if (contentType.includes("application/json")) {
-              try { payload = JSON.parse(text); } catch {/* keep raw text */}
-            }
-            const err: any = new Error(
-              `HTTP ${response.status}: ${typeof payload === "string" ? payload : JSON.stringify(payload)}`
-            );
-            err.status = response.status;
-            err.payload = payload;
-            return throwError(() => err);
-          })
-        );
+export async function* runHttpRequest(
+  url: string,
+  requestInit: RequestInit,
+): AsyncIterable<HttpEvent> {
+  const response = await fetch(url, requestInit);
+
+  if (!response.ok) {
+    const contentType = response.headers.get("content-type") || "";
+    const text = await response.text();
+    let payload: unknown = text;
+    if (contentType.includes("application/json")) {
+      try {
+        payload = JSON.parse(text);
+      } catch {
+        /* keep raw text */
       }
-      // Emit headers event first
-      const headersEvent: HttpHeadersEvent = {
-        type: HttpEventType.HEADERS,
-        status: response.status,
-        headers: response.headers,
-      };
+    }
+    const err: any = new Error(
+      `HTTP ${response.status}: ${typeof payload === "string" ? payload : JSON.stringify(payload)}`,
+    );
+    err.status = response.status;
+    err.payload = payload;
+    throw err;
+  }
 
-      const reader = response.body?.getReader();
-      if (!reader) {
-        return throwError(() => new Error("Failed to getReader() from response"));
+  // Emit headers event first
+  yield {
+    type: HttpEventType.HEADERS,
+    status: response.status,
+    headers: response.headers,
+  } as HttpHeadersEvent;
+
+  const reader = response.body?.getReader();
+  if (!reader) {
+    throw new Error("Failed to getReader() from response");
+  }
+
+  try {
+    while (true) {
+      const { done, value } = await reader.read();
+      if (done) break;
+      yield {
+        type: HttpEventType.DATA,
+        data: value,
+      } as HttpDataEvent;
+    }
+  } finally {
+    await reader.cancel().catch((error) => {
+      if ((error as DOMException)?.name === "AbortError") {
+        return;
       }
-
-      return new Observable<HttpEvent>((subscriber) => {
-        // Emit headers event first
-        subscriber.next(headersEvent);
-
-        (async () => {
-          try {
-            while (true) {
-              const { done, value } = await reader.read();
-              if (done) break;
-              // Emit data event instead of raw Uint8Array
-              const dataEvent: HttpDataEvent = {
-                type: HttpEventType.DATA,
-                data: value,
-              };
-              subscriber.next(dataEvent);
-            }
-            subscriber.complete();
-          } catch (error) {
-            subscriber.error(error);
-          }
-        })();
-
-        return () => {
-          reader.cancel().catch((error) => {
-            if ((error as DOMException)?.name === "AbortError") {
-              return;
-            }
-
-            throw error;
-          });
-        };
-      });
-    }),
-  );
-};
+      throw error;
+    });
+  }
+}

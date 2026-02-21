@@ -10,109 +10,105 @@ import {
   ToolCallEndEvent,
   ToolCallResultEvent,
 } from "@ag-ui/core";
-import { Observable } from "rxjs";
+import { collectAsync } from "@/async-utils";
 
 describe("FilterToolCallsMiddleware", () => {
   class ToolCallingAgent extends AbstractAgent {
-    run(input: RunAgentInput): Observable<BaseEvent> {
-      return new Observable<BaseEvent>((subscriber) => {
-        // Emit RUN_STARTED
-        subscriber.next({
-          type: EventType.RUN_STARTED,
-          threadId: input.threadId,
-          runId: input.runId,
-        });
+    async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+      // Emit RUN_STARTED
+      yield {
+        type: EventType.RUN_STARTED,
+        threadId: input.threadId,
+        runId: input.runId,
+      };
 
-        // Emit first tool call (calculator)
-        const toolCall1Id = "tool-call-1";
-        subscriber.next({
-          type: EventType.TOOL_CALL_START,
-          toolCallId: toolCall1Id,
-          toolCallName: "calculator",
-          parentMessageId: "message-1",
-        } as ToolCallStartEvent);
+      // Emit first tool call (calculator)
+      const toolCall1Id = "tool-call-1";
+      yield {
+        type: EventType.TOOL_CALL_START,
+        toolCallId: toolCall1Id,
+        toolCallName: "calculator",
+        parentMessageId: "message-1",
+      } as ToolCallStartEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_ARGS,
-          toolCallId: toolCall1Id,
-          delta: '{"operation": "add", "a": 5, "b": 3}',
-        } as ToolCallArgsEvent);
+      yield {
+        type: EventType.TOOL_CALL_ARGS,
+        toolCallId: toolCall1Id,
+        delta: '{"operation": "add", "a": 5, "b": 3}',
+      } as ToolCallArgsEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_END,
-          toolCallId: toolCall1Id,
-        } as ToolCallEndEvent);
+      yield {
+        type: EventType.TOOL_CALL_END,
+        toolCallId: toolCall1Id,
+      } as ToolCallEndEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_RESULT,
-          messageId: "tool-message-1",
-          toolCallId: toolCall1Id,
-          content: "8",
-        } as ToolCallResultEvent);
+      yield {
+        type: EventType.TOOL_CALL_RESULT,
+        messageId: "tool-message-1",
+        toolCallId: toolCall1Id,
+        content: "8",
+      } as ToolCallResultEvent;
 
-        // Emit second tool call (weather)
-        const toolCall2Id = "tool-call-2";
-        subscriber.next({
-          type: EventType.TOOL_CALL_START,
-          toolCallId: toolCall2Id,
-          toolCallName: "weather",
-          parentMessageId: "message-2",
-        } as ToolCallStartEvent);
+      // Emit second tool call (weather)
+      const toolCall2Id = "tool-call-2";
+      yield {
+        type: EventType.TOOL_CALL_START,
+        toolCallId: toolCall2Id,
+        toolCallName: "weather",
+        parentMessageId: "message-2",
+      } as ToolCallStartEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_ARGS,
-          toolCallId: toolCall2Id,
-          delta: '{"city": "New York"}',
-        } as ToolCallArgsEvent);
+      yield {
+        type: EventType.TOOL_CALL_ARGS,
+        toolCallId: toolCall2Id,
+        delta: '{"city": "New York"}',
+      } as ToolCallArgsEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_END,
-          toolCallId: toolCall2Id,
-        } as ToolCallEndEvent);
+      yield {
+        type: EventType.TOOL_CALL_END,
+        toolCallId: toolCall2Id,
+      } as ToolCallEndEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_RESULT,
-          messageId: "tool-message-2",
-          toolCallId: toolCall2Id,
-          content: "Sunny, 72°F",
-        } as ToolCallResultEvent);
+      yield {
+        type: EventType.TOOL_CALL_RESULT,
+        messageId: "tool-message-2",
+        toolCallId: toolCall2Id,
+        content: "Sunny, 72°F",
+      } as ToolCallResultEvent;
 
-        // Emit third tool call (search)
-        const toolCall3Id = "tool-call-3";
-        subscriber.next({
-          type: EventType.TOOL_CALL_START,
-          toolCallId: toolCall3Id,
-          toolCallName: "search",
-          parentMessageId: "message-3",
-        } as ToolCallStartEvent);
+      // Emit third tool call (search)
+      const toolCall3Id = "tool-call-3";
+      yield {
+        type: EventType.TOOL_CALL_START,
+        toolCallId: toolCall3Id,
+        toolCallName: "search",
+        parentMessageId: "message-3",
+      } as ToolCallStartEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_ARGS,
-          toolCallId: toolCall3Id,
-          delta: '{"query": "TypeScript middleware"}',
-        } as ToolCallArgsEvent);
+      yield {
+        type: EventType.TOOL_CALL_ARGS,
+        toolCallId: toolCall3Id,
+        delta: '{"query": "TypeScript middleware"}',
+      } as ToolCallArgsEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_END,
-          toolCallId: toolCall3Id,
-        } as ToolCallEndEvent);
+      yield {
+        type: EventType.TOOL_CALL_END,
+        toolCallId: toolCall3Id,
+      } as ToolCallEndEvent;
 
-        subscriber.next({
-          type: EventType.TOOL_CALL_RESULT,
-          messageId: "tool-message-3",
-          toolCallId: toolCall3Id,
-          content: "Results found...",
-        } as ToolCallResultEvent);
+      yield {
+        type: EventType.TOOL_CALL_RESULT,
+        messageId: "tool-message-3",
+        toolCallId: toolCall3Id,
+        content: "Results found...",
+      } as ToolCallResultEvent;
 
-        // Emit RUN_FINISHED
-        subscriber.next({
-          type: EventType.RUN_FINISHED,
-          threadId: input.threadId,
-          runId: input.runId,
-        });
-
-        subscriber.complete();
-      });
+      // Emit RUN_FINISHED
+      yield {
+        type: EventType.RUN_FINISHED,
+        threadId: input.threadId,
+        runId: input.runId,
+      };
     }
   }
 
@@ -132,13 +128,7 @@ describe("FilterToolCallsMiddleware", () => {
       disallowedToolCalls: ["calculator", "search"],
     });
 
-    const events: BaseEvent[] = [];
-    await new Promise<void>((resolve) => {
-      middleware.run(input, agent).subscribe({
-        next: (event) => events.push(event),
-        complete: () => resolve(),
-      });
-    });
+    const events = await collectAsync(middleware.run(input, agent));
 
     // Should have RUN_STARTED, weather tool events (4), and RUN_FINISHED
     expect(events.length).toBe(6);
@@ -166,13 +156,7 @@ describe("FilterToolCallsMiddleware", () => {
       allowedToolCalls: ["calculator"],
     });
 
-    const events: BaseEvent[] = [];
-    await new Promise<void>((resolve) => {
-      middleware.run(input, agent).subscribe({
-        next: (event) => events.push(event),
-        complete: () => resolve(),
-      });
-    });
+    const events = await collectAsync(middleware.run(input, agent));
 
     // Should have RUN_STARTED, calculator tool events (4), and RUN_FINISHED
     expect(events.length).toBe(6);

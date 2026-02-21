@@ -7,47 +7,38 @@ import {
   RunFinishedEvent,
   TextMessageChunkEvent,
 } from "@ag-ui/core";
-import { Observable } from "rxjs";
+import { collectAsync } from "@/async-utils";
 
 describe("Middleware runNextWithState", () => {
   class StatefulAgent extends AbstractAgent {
-    run(input: RunAgentInput): Observable<BaseEvent> {
-      return new Observable<BaseEvent>((subscriber) => {
-        subscriber.next({
-          type: EventType.RUN_STARTED,
-          threadId: input.threadId,
-          runId: input.runId,
-        });
+    async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+      yield {
+        type: EventType.RUN_STARTED,
+        threadId: input.threadId,
+        runId: input.runId,
+      };
 
-        subscriber.next({
-          type: EventType.TEXT_MESSAGE_CHUNK,
-          messageId: "message-1",
-          role: "assistant",
-          delta: "Hello",
-        } as TextMessageChunkEvent);
+      yield {
+        type: EventType.TEXT_MESSAGE_CHUNK,
+        messageId: "message-1",
+        role: "assistant",
+        delta: "Hello",
+      } as TextMessageChunkEvent;
 
-        subscriber.next({
-          type: EventType.RUN_FINISHED,
-          threadId: input.threadId,
-          runId: input.runId,
-          result: { success: true },
-        } as RunFinishedEvent);
-
-        subscriber.complete();
-      });
+      yield {
+        type: EventType.RUN_FINISHED,
+        threadId: input.threadId,
+        runId: input.runId,
+        result: { success: true },
+      } as RunFinishedEvent;
     }
   }
 
   class StateTrackingMiddleware extends Middleware {
-    run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
-      return this.runNextWithState(input, next).pipe((source) => {
-        return new Observable<BaseEvent>((subscriber) => {
-          source.subscribe({
-            next: ({ event }) => subscriber.next(event),
-            complete: () => subscriber.complete(),
-          });
-        });
-      });
+    async *run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
+      for await (const { event } of this.runNextWithState(input, next)) {
+        yield event;
+      }
     }
   }
 
@@ -65,13 +56,7 @@ describe("Middleware runNextWithState", () => {
     const agent = new StatefulAgent();
     const middleware = new StateTrackingMiddleware();
 
-    const events: BaseEvent[] = [];
-    await new Promise<void>((resolve) => {
-      middleware.run(input, agent).subscribe({
-        next: (event) => events.push(event),
-        complete: () => resolve(),
-      });
-    });
+    const events = await collectAsync(middleware.run(input, agent));
 
     expect(events.length).toBe(5);
     expect(events[0].type).toBe(EventType.RUN_STARTED);

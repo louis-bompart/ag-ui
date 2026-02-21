@@ -5,7 +5,6 @@
 
 import { HttpAgent } from "@ag-ui/client";
 import type { BaseEvent, Message, RunAgentInput } from "@ag-ui/core";
-import { Observable } from "rxjs";
 
 /**
  * Normalizes AG-UI tool result messages before sending them to the LlamaIndex server.
@@ -38,7 +37,7 @@ export class LlamaIndexAgent extends HttpAgent {
     return "0.0.39";
   }
 
-  public override run(input: RunAgentInput): Observable<BaseEvent> {
+  public override run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     const sanitizedInput: RunAgentInput = {
       ...input,
       messages: normalizeEmptyToolResults(input.messages),
