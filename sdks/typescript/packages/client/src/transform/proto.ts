@@ -1,7 +1,7 @@
 import { Observable, Subject } from "rxjs";
 import { HttpEvent, HttpEventType } from "../run/http-request";
 import { BaseEvent } from "@ag-ui/core";
-import * as proto from "@ag-ui/proto";
+import {decode} from "@ag-ui/proto";
 
 /**
  * Parses a stream of HTTP events into a stream of BaseEvent objects using Protocol Buffer format.
@@ -65,7 +65,7 @@ export const parseProtoStream = (source$: Observable<HttpEvent>): Observable<Bas
         const message = buffer.slice(4, totalLength);
 
         // Decode the protocol buffer message using the imported decode function
-        const event = proto.decode(message);
+        const event = decode(message);
 
         // Emit the parsed event
         eventSubject.next(event);

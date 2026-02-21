@@ -3,7 +3,7 @@ import { Subject, ReplaySubject, Observable } from "rxjs";
 import { HttpEvent, HttpEventType } from "../run/http-request";
 import { parseSSEStream } from "./sse";
 import { parseProtoStream } from "./proto";
-import * as proto from "@ag-ui/proto";
+import {AGUI_MEDIA_TYPE} from "@ag-ui/proto";
 import { EventType } from "@ag-ui/core";
 
 /**
@@ -30,7 +30,7 @@ export const transformHttpEventStream = (source$: Observable<HttpEvent>): Observ
         const contentType = event.headers.get("content-type");
 
         // Choose parser based on content type
-        if (contentType === proto.AGUI_MEDIA_TYPE) {
+        if (contentType === AGUI_MEDIA_TYPE) {
           // Use protocol buffer parser
           parseProtoStream(bufferSubject).subscribe({
             next: (event) => eventSubject.next(event),

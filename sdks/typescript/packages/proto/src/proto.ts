@@ -1,6 +1,6 @@
 import { BaseEvent, AGUIEvent, EventSchemas, EventType, Message } from "@ag-ui/core";
-import * as protoEvents from "./generated/events";
-import * as protoPatch from "./generated/patch";
+import {EventType as ProtoEventType, Event as ProtoEvent} from "./generated/events";
+import {JsonPatchOperationType} from "./generated/patch";
 
 function toCamelCase(str: string): string {
   return str.toLowerCase().replace(/_([a-z])/g, (_, letter) => letter.toUpperCase());
@@ -50,21 +50,21 @@ export function encode(event: BaseEvent): Uint8Array {
   if (type === EventType.STATE_DELTA && Array.isArray(rest.delta)) {
     rest.delta = (rest.delta as any[]).map((operation: any) => ({
       ...operation,
-      op: protoPatch.JsonPatchOperationType[operation.op.toUpperCase()],
+      op: JsonPatchOperationType[operation.op.toUpperCase()],
     }));
   }
 
   const eventMessage = {
     [oneofField]: {
       baseEvent: {
-        type: protoEvents.EventType[event.type as keyof typeof protoEvents.EventType],
+        type: ProtoEventType[event.type as keyof typeof ProtoEventType],
         timestamp,
         rawEvent,
       },
       ...rest,
     },
   };
-  return protoEvents.Event.encode(eventMessage).finish();
+  return ProtoEvent.encode(eventMessage).finish();
 }
 
 /**
@@ -72,12 +72,12 @@ export function encode(event: BaseEvent): Uint8Array {
  * The format includes a 4-byte length prefix followed by the message.
  */
 export function decode(data: Uint8Array): BaseEvent {
-  const event = protoEvents.Event.decode(data);
+  const event = ProtoEvent.decode(data);
   const decoded = Object.values(event).find((value) => value !== undefined);
   if (!decoded) {
     throw new Error("Invalid event");
   }
-  decoded.type = protoEvents.EventType[decoded.baseEvent.type];
+  decoded.type = ProtoEventType[decoded.baseEvent.type];
   decoded.timestamp = decoded.baseEvent.timestamp;
   decoded.rawEvent = decoded.baseEvent.rawEvent;
 
@@ -94,7 +94,7 @@ export function decode(data: Uint8Array): BaseEvent {
   // custom mapping for json patch operations
   if (decoded.type === EventType.STATE_DELTA) {
     for (const operation of (decoded as any).delta) {
-      operation.op = protoPatch.JsonPatchOperationType[operation.op].toLowerCase();
+      operation.op = JsonPatchOperationType[operation.op].toLowerCase();
       Object.keys(operation).forEach((key) => {
         if (operation[key] === undefined) {
           delete operation[key];
