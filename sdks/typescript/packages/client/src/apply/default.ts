@@ -42,19 +42,16 @@ import {
   type ToolMessage,
   UserMessage,
 } from "@ag-ui/core";
-import * as jsonpatch from "fast-json-patch";
-import { EMPTY, of } from "rxjs";
-import type { Observable } from "rxjs";
-import { concatMap, defaultIfEmpty, mergeAll, mergeMap } from "rxjs/operators";
+import * as fastJsonPatch from "fast-json-patch";
 import untruncateJson from "untruncate-json";
 import { structuredClone_ } from "../utils";
 
-export const defaultApplyEvents = (
+export const defaultApplyEvents = async function* (
   input: RunAgentInput,
-  events$: Observable<BaseEvent>,
+  events: AsyncIterable<BaseEvent>,
   agent: AbstractAgent,
   subscribers: AgentSubscriber[],
-): Observable<AgentStateMutation> => {
+): AsyncIterable<AgentStateMutation> {
   let messages = structuredClone_(agent.messages);
   let state = structuredClone_(input.state);
   let currentMutation: AgentStateMutation = {};
@@ -70,17 +67,18 @@ export const defaultApplyEvents = (
     }
   };
 
-  const emitUpdates = () => {
+  const emitUpdates = (): AgentStateMutation | undefined => {
     const result = structuredClone_(currentMutation) as AgentStateMutation;
     currentMutation = {};
     if (result.messages !== undefined || result.state !== undefined) {
-      return of(result);
+      return result;
     }
-    return EMPTY;
+    return undefined;
   };
 
-  return events$.pipe(
-    concatMap(async (event) => {
+  let yieldedAny = false;
+
+  for await (const event of events) {
       const mutation = await runSubscribersWithMutation(
         subscribers,
         messages,
@@ -91,7 +89,7 @@ export const defaultApplyEvents = (
       applyMutation(mutation);
 
       if (mutation.stopPropagation === true) {
-        return emitUpdates();
+        { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } continue; }
       }
 
       switch (event.type) {
@@ -134,7 +132,7 @@ export const defaultApplyEvents = (
             // If message already exists, we don't need to create a new one
             // The TEXT_MESSAGE_CONTENT events will update the existing message's content
           }
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TEXT_MESSAGE_CONTENT: {
@@ -144,7 +142,7 @@ export const defaultApplyEvents = (
           const targetMessage = messages.find((m) => m.id === messageId);
           if (!targetMessage) {
             console.warn(`TEXT_MESSAGE_CONTENT: No message found with ID '${messageId}'`);
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const mutation = await runSubscribersWithMutation(
@@ -172,7 +170,7 @@ export const defaultApplyEvents = (
             applyMutation({ messages });
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TEXT_MESSAGE_END: {
@@ -182,7 +180,7 @@ export const defaultApplyEvents = (
           const targetMessage = messages.find((m) => m.id === messageId);
           if (!targetMessage) {
             console.warn(`TEXT_MESSAGE_END: No message found with ID '${messageId}'`);
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const mutation = await runSubscribersWithMutation(
@@ -214,7 +212,7 @@ export const defaultApplyEvents = (
             }),
           );
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TOOL_CALL_START: {
@@ -270,7 +268,7 @@ export const defaultApplyEvents = (
             applyMutation({ messages });
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TOOL_CALL_ARGS: {
@@ -285,14 +283,14 @@ export const defaultApplyEvents = (
             console.warn(
               `TOOL_CALL_ARGS: No message found containing tool call with ID '${toolCallId}'`,
             );
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           // Find the specific tool call
           const targetToolCall = targetMessage.toolCalls?.find((tc) => tc.id === toolCallId);
           if (!targetToolCall) {
             console.warn(`TOOL_CALL_ARGS: No tool call found with ID '${toolCallId}'`);
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const mutation = await runSubscribersWithMutation(
@@ -328,7 +326,7 @@ export const defaultApplyEvents = (
             applyMutation({ messages });
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TOOL_CALL_END: {
@@ -343,14 +341,14 @@ export const defaultApplyEvents = (
             console.warn(
               `TOOL_CALL_END: No message found containing tool call with ID '${toolCallId}'`,
             );
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           // Find the specific tool call
           const targetToolCall = targetMessage.toolCalls?.find((tc) => tc.id === toolCallId);
           if (!targetToolCall) {
             console.warn(`TOOL_CALL_END: No tool call found with ID '${toolCallId}'`);
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const mutation = await runSubscribersWithMutation(
@@ -389,7 +387,7 @@ export const defaultApplyEvents = (
             }),
           );
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TOOL_CALL_RESULT: {
@@ -436,7 +434,7 @@ export const defaultApplyEvents = (
             applyMutation({ messages });
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.STATE_SNAPSHOT: {
@@ -464,7 +462,7 @@ export const defaultApplyEvents = (
             applyMutation({ state });
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.STATE_DELTA: {
@@ -488,7 +486,7 @@ export const defaultApplyEvents = (
 
             try {
               // Apply the JSON Patch operations to the current state without mutating the original
-              const result = jsonpatch.applyPatch(state, delta, true, false);
+              const result = fastJsonPatch.applyPatch(state, delta, true, false);
               state = result.newDocument;
               applyMutation({ state });
             } catch (error: unknown) {
@@ -501,7 +499,7 @@ export const defaultApplyEvents = (
             }
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.MESSAGES_SNAPSHOT: {
@@ -529,7 +527,7 @@ export const defaultApplyEvents = (
             applyMutation({ messages });
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.ACTIVITY_SNAPSHOT: {
@@ -600,7 +598,7 @@ export const defaultApplyEvents = (
             }
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.ACTIVITY_DELTA: {
@@ -610,7 +608,7 @@ export const defaultApplyEvents = (
             console.warn(
               `ACTIVITY_DELTA: No message found with ID '${activityEvent.messageId}' to apply patch`,
             );
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const existingMessage = messages[existingIndex];
@@ -618,7 +616,7 @@ export const defaultApplyEvents = (
             console.warn(
               `ACTIVITY_DELTA: Message '${activityEvent.messageId}' is not an activity message`,
             );
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const existingActivityMessage = existingMessage as ActivityMessage;
@@ -643,7 +641,7 @@ export const defaultApplyEvents = (
             try {
               const baseContent = structuredClone_(existingActivityMessage.content ?? {});
 
-              const result = jsonpatch.applyPatch(
+              const result = fastJsonPatch.applyPatch(
                 baseContent,
                 activityEvent.patch ?? [],
                 true,
@@ -666,7 +664,7 @@ export const defaultApplyEvents = (
             }
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.RAW: {
@@ -685,7 +683,7 @@ export const defaultApplyEvents = (
           );
           applyMutation(mutation);
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.CUSTOM: {
@@ -704,7 +702,7 @@ export const defaultApplyEvents = (
           );
           applyMutation(mutation);
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.RUN_STARTED: {
@@ -742,7 +740,7 @@ export const defaultApplyEvents = (
             }
           }
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.RUN_FINISHED: {
@@ -762,7 +760,7 @@ export const defaultApplyEvents = (
           );
           applyMutation(mutation);
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.RUN_ERROR: {
@@ -781,7 +779,7 @@ export const defaultApplyEvents = (
           );
           applyMutation(mutation);
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.STEP_STARTED: {
@@ -800,7 +798,7 @@ export const defaultApplyEvents = (
           );
           applyMutation(mutation);
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.STEP_FINISHED: {
@@ -819,7 +817,7 @@ export const defaultApplyEvents = (
           );
           applyMutation(mutation);
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.TEXT_MESSAGE_CHUNK: {
@@ -831,23 +829,23 @@ export const defaultApplyEvents = (
         }
 
         case EventType.THINKING_START: {
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.THINKING_END: {
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.THINKING_TEXT_MESSAGE_START: {
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.THINKING_TEXT_MESSAGE_CONTENT: {
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.THINKING_TEXT_MESSAGE_END: {
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.REASONING_START: {
@@ -865,7 +863,7 @@ export const defaultApplyEvents = (
               }),
           );
           applyMutation(mutation);
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.REASONING_MESSAGE_START: {
@@ -898,7 +896,7 @@ export const defaultApplyEvents = (
               applyMutation({ messages });
             }
           }
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.REASONING_MESSAGE_CONTENT: {
@@ -907,7 +905,7 @@ export const defaultApplyEvents = (
           const targetMessage = messages.find((m) => m.id === messageId);
           if (!targetMessage) {
             console.warn(`REASONING_MESSAGE_CONTENT: No message found with ID '${messageId}'`);
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const mutation = await runSubscribersWithMutation(
@@ -933,7 +931,7 @@ export const defaultApplyEvents = (
             targetMessage.content = `${existingContent}${delta}`;
             applyMutation({ messages });
           }
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.REASONING_MESSAGE_END: {
@@ -942,7 +940,7 @@ export const defaultApplyEvents = (
           const targetMessage = messages.find((m) => m.id === messageId);
           if (!targetMessage) {
             console.warn(`REASONING_MESSAGE_END: No message found with ID '${messageId}'`);
-            return emitUpdates();
+            { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
           }
 
           const mutation = await runSubscribersWithMutation(
@@ -974,7 +972,7 @@ export const defaultApplyEvents = (
             }),
           );
 
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.REASONING_MESSAGE_CHUNK: {
@@ -996,7 +994,7 @@ export const defaultApplyEvents = (
               }),
           );
           applyMutation(mutation);
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
 
         case EventType.REASONING_ENCRYPTED_VALUE: {
@@ -1043,18 +1041,15 @@ export const defaultApplyEvents = (
               currentMutation.messages = messages;
             }
           }
-          return emitUpdates();
+          { const _u = emitUpdates(); if (_u) { yield _u; yieldedAny = true; } break; }
         }
       }
+    }
 
-      // This makes TypeScript check that the switch is exhaustive
-      // If a new EventType is added, this will cause a compile error
-      const _exhaustiveCheck: never = event.type;
-      return emitUpdates();
-    }),
-    mergeAll(),
-    // Only use defaultIfEmpty when there are subscribers to avoid emitting empty updates
-    // when patches fail and there are no subscribers (like in state patching test)
-    subscribers.length > 0 ? defaultIfEmpty({} as AgentStateMutation) : (stream: any) => stream,
-  );
+  // Only use defaultIfEmpty when there are subscribers to avoid emitting empty updates
+  // when patches fail and there are no subscribers (like in state patching test)
+  if (!yieldedAny && subscribers.length > 0) {
+    const empty: AgentStateMutation = {};
+    yield empty;
+  }
 };

@@ -22,47 +22,52 @@ import { TransformHttpEventStreamHandlers } from "./base-type";
  * ]);
  */
 export const transformHttpEventStreamFactory = (handlers: TransformHttpEventStreamHandlers[]) =>
-  (source$: Observable<HttpEvent>): Observable<BaseEvent> => {
-    const eventSubject = new Subject<BaseEvent>();
-
-    // Use ReplaySubject to buffer events until we decide on the parser
-    const bufferSubject = new ReplaySubject<HttpEvent>();
-
-    // Flag to track whether we've set up the parser
+  async function* (source: AsyncIterable<HttpEvent>): AsyncIterable<BaseEvent> {
+    // Buffer events until we know the content-type, then pipe through the right parser
+    const buffered: HttpEvent[] = [];
     let parserInitialized = false;
+    let contentType: string | null = null;
 
-    // Subscribe to source and buffer events while we determine the content type
-    source$.subscribe({
-      next: (event: HttpEvent) => {
-        // Forward event to buffer
-        bufferSubject.next(event);
+    for await (const event of source) {
+      if (!parserInitialized) {
+        buffered.push(event);
 
-        // If we get headers and haven't initialized a parser yet, check content type
-        if (event.type === HttpEventType.HEADERS && !parserInitialized) {
+        if (event.type === HttpEventType.HEADERS) {
           parserInitialized = true;
-          const contentType = event.headers.get("content-type");
+          contentType = event.headers.get("content-type");
 
-
-          // Choose parser based on content type
-          const handler = handlers.find(h => h.condition(event));
-          if (handler) {
-            // Set up the parser with the buffered events
-            handler.parser(bufferSubject, eventSubject);
-          } else {
-            eventSubject.error(new Error(`Unsupported content type: ${contentType}`));
+          // Create an async iterable that replays buffered events then continues from source
+          const replayAndContinue = replayThenForward(buffered, source);
+          for (const handler of handlers) {
+            if (handler.condition({ headers: event.headers })) {
+              yield* handler.parser(replayAndContinue, new Subject<BaseEvent>());
+              return; // After the parser finishes, we're done
+            }
           }
-        } else if (!parserInitialized) {
-          eventSubject.error(new Error("No headers event received before data events"));
         }
-      },
-      error: (err) => {
-        bufferSubject.error(err);
-        eventSubject.error(err);
-      },
-      complete: () => {
-        bufferSubject.complete();
-      },
-    });
+      }
 
-    return eventSubject.asObservable();
-  };
+      // If we never got headers, that's an error
+      if (!parserInitialized) {
+        throw new Error("No headers event received before stream ended");
+      }
+    };
+  }
+
+    /**
+     * Creates an async iterable that first yields all buffered events,
+     * then yields remaining events from the source. Since the source
+     * iterator has already been partially consumed by the outer loop,
+     * we continue from where we left off.
+     */
+    async function* replayThenForward(
+      buffered: HttpEvent[],
+      source: AsyncIterable<HttpEvent>,
+    ): AsyncIterable<HttpEvent> {
+      // Replay buffered events
+      for (const event of buffered) {
+        yield event;
+      }
+      // Forward remaining events from source
+      yield* source;
+    }

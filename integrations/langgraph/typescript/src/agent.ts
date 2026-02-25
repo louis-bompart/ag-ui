@@ -1,4 +1,3 @@
-import { Observable, Subscriber } from "rxjs";
 import {
   Client as LangGraphClient,
   EventsStreamEvent,
@@ -128,8 +127,7 @@ export class LangGraphAgent extends AbstractAgent {
   // Stop control flags
   private cancelRequested: boolean = false;
   private cancelSent: boolean = false;
-  // @ts-expect-error no need to initialize subscriber right now
-  subscriber: Subscriber<ProcessedEvents>;
+  private pendingEvents: ProcessedEvents[] = [];
   constantSchemaKeys: string[] = DEFAULT_SCHEMA_KEYS;
   config: LangGraphAgentConfig;
 
@@ -171,18 +169,22 @@ export class LangGraphAgent extends AbstractAgent {
   }
 
   dispatchEvent(event: ProcessedEvents) {
-    this.subscriber.next(event);
+    this.pendingEvents.push(event);
     return true;
   }
 
-  run(input: RunAgentInput) {
-    return new Observable<ProcessedEvents>((subscriber) => {
-      this.runAgentStream(input, subscriber);
-      return () => {};
-    });
+  private *drainEvents(): Generator<ProcessedEvents> {
+    while (this.pendingEvents.length > 0) {
+      yield this.pendingEvents.shift()!;
+    }
   }
 
-  async runAgentStream(input: RunAgentExtendedInput, subscriber: Subscriber<ProcessedEvents>) {
+  async *run(input: RunAgentInput): AsyncIterable<ProcessedEvents> {
+    this.pendingEvents = [];
+    yield* this.runAgentStream(input);
+  }
+
+  async *runAgentStream(input: RunAgentExtendedInput): AsyncIterable<ProcessedEvents> {
     this.activeRun = {
       id: input.runId,
       threadId: input.threadId,
@@ -191,7 +193,6 @@ export class LangGraphAgent extends AbstractAgent {
     // Reset cancel flags for this run
     this.cancelRequested = false;
     this.cancelSent = false;
-    this.subscriber = subscriber;
     if (!this.assistant) {
       this.assistant = await this.getAssistant();
     }
@@ -200,11 +201,14 @@ export class LangGraphAgent extends AbstractAgent {
       input.forwardedProps?.streamMode ?? (["events", "values", "updates"] satisfies StreamMode[]);
     const preparedStream = await this.prepareStream({ ...input, threadId }, streamMode);
 
+    // Drain any events dispatched during prepareStream (e.g. interrupt handling)
+    yield* this.drainEvents();
+
     if (!preparedStream) {
-      return subscriber.error("No stream to regenerate");
+      return;
     }
 
-    await this.handleStreamEvents(preparedStream, threadId, subscriber, input, Array.isArray(streamMode) ? streamMode : [streamMode]);
+    yield* this.handleStreamEvents(preparedStream, threadId, input, Array.isArray(streamMode) ? streamMode : [streamMode]);
   }
 
   async prepareRegenerateStream(input: RegenerateInput, streamMode: StreamMode | StreamMode[]) {
@@ -219,7 +223,7 @@ export class LangGraphAgent extends AbstractAgent {
     }
 
     if (!timeTravelCheckpoint) {
-      return this.subscriber.error("No checkpoint found for message");
+      throw new Error("No checkpoint found for message");
     }
 
     const fork = await this.client.threads.updateState(threadId, {
@@ -303,7 +307,7 @@ export class LangGraphAgent extends AbstractAgent {
       }
 
       if (!lastUserMessage) {
-        return this.subscriber.error("No user message found in messages to regenerate");
+        throw new Error("No user message found in messages to regenerate");
       }
 
       return this.prepareRegenerateStream(
@@ -394,7 +398,7 @@ export class LangGraphAgent extends AbstractAgent {
         threadId,
         runId: input.runId,
       });
-      return this.subscriber.complete();
+      return undefined;
     }
 
     return {
@@ -404,18 +408,16 @@ export class LangGraphAgent extends AbstractAgent {
     };
   }
 
-  async handleStreamEvents(
+  async *handleStreamEvents(
     stream: Awaited<
       ReturnType<typeof this.prepareStream> | ReturnType<typeof this.prepareRegenerateStream>
     >,
     threadId: string,
-    subscriber: Subscriber<ProcessedEvents>,
     input: RunAgentExtendedInput,
     streamModes: StreamMode | StreamMode[],
-  ) {
+  ): AsyncIterable<ProcessedEvents> {
     const { forwardedProps } = input;
     const nodeNameInput = forwardedProps?.nodeName;
-    this.subscriber = subscriber;
     let shouldExit = false;
     if (!stream) return;
 
@@ -432,6 +434,7 @@ export class LangGraphAgent extends AbstractAgent {
         runId: this.activeRun!.id,
       });
       this.handleNodeChange(nodeNameInput)
+      yield* this.drainEvents();
 
       for await (let streamResponseChunk of streamResponse) {
         // If a cancel was requested and we haven't sent it yet, try now.
@@ -574,6 +577,7 @@ export class LangGraphAgent extends AbstractAgent {
         });
 
         this.handleSingleEvent(chunkData);
+        yield* this.drainEvents();
       }
 
       state = await this.client.threads.getState(threadId);
@@ -621,9 +625,9 @@ export class LangGraphAgent extends AbstractAgent {
       this.cancelRequested = false;
       this.cancelSent = false;
       this.activeRun = undefined;
-      return subscriber.complete();
+      yield* this.drainEvents();
     } catch (e) {
-      return subscriber.error(e);
+      throw e;
     }
   }
 
@@ -1116,7 +1120,6 @@ export class LangGraphAgent extends AbstractAgent {
         type: EventType.RUN_ERROR,
         message: redefinedError.message,
       });
-      this.subscriber.error()
       throw redefinedError;
     }
   }

@@ -1,5 +1,4 @@
-import { of, concat } from "rxjs";
-import { toArray } from "rxjs/operators";
+import { ofAsync, collectAsync } from "@/async-utils";
 import { transformChunks } from "../transform";
 import {
   BaseEvent,
@@ -16,7 +15,6 @@ import {
   RawEvent,
   RunFinishedEvent,
 } from "@ag-ui/core";
-import { firstValueFrom } from "rxjs";
 import { describe, expect, it } from "vitest";
 
 describe("transformChunks", () => {
@@ -34,10 +32,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk, closeEvent)));
     expect(events.length).toBe(4);
 
     expect(events[0]).toEqual({
@@ -80,10 +75,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk1, chunk2), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk1, chunk2, closeEvent)));
     expect(events.length).toBe(5);
 
     expect(events[0]).toEqual({
@@ -127,10 +119,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk, closeEvent)));
     expect(events.length).toBe(4);
 
     expect(events[0]).toEqual({
@@ -174,10 +163,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(textChunk, toolChunk), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(textChunk, toolChunk, closeEvent)));
     expect(events.length).toBe(7);
 
     // Text message events
@@ -201,10 +187,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = of(runStartEvent);
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(runStartEvent)));
     expect(events.length).toBe(1);
     expect(events[0]).toEqual(runStartEvent);
   });
@@ -222,10 +205,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = of(textChunk, runStartEvent);
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(textChunk, runStartEvent)));
     expect(events.length).toBe(4);
 
     expect(events[0].type).toBe(EventType.TEXT_MESSAGE_START);
@@ -254,10 +234,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk1, chunk2), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk1, chunk2, closeEvent)));
     expect(events.length).toBe(7);
 
     // First message
@@ -290,10 +267,7 @@ describe("transformChunks", () => {
       delta: "This will fail",
     };
 
-    const events$ = of(invalidChunk);
-    const transformed$ = transformChunks(false)(events$);
-
-    await expect(firstValueFrom(transformed$)).rejects.toThrow(
+    await expect(collectAsync(transformChunks(false)(ofAsync(invalidChunk)))).rejects.toThrow(
       "First TEXT_MESSAGE_CHUNK must have a messageId",
     );
   });
@@ -304,10 +278,7 @@ describe("transformChunks", () => {
       delta: "This will fail",
     };
 
-    const events$ = of(invalidChunk);
-    const transformed$ = transformChunks(false)(events$);
-
-    await expect(firstValueFrom(transformed$)).rejects.toThrow(
+    await expect(collectAsync(transformChunks(false)(ofAsync(invalidChunk)))).rejects.toThrow(
       "First TOOL_CALL_CHUNK must have a toolCallId",
     );
   });
@@ -319,10 +290,7 @@ describe("transformChunks", () => {
       delta: "This will fail",
     };
 
-    const events$ = of(invalidChunk);
-    const transformed$ = transformChunks(false)(events$);
-
-    await expect(firstValueFrom(transformed$)).rejects.toThrow(
+    await expect(collectAsync(transformChunks(false)(ofAsync(invalidChunk)))).rejects.toThrow(
       "First TOOL_CALL_CHUNK must have a toolCallName",
     );
   });
@@ -343,10 +311,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk, closeEvent)));
     expect(events.length).toBe(4);
 
     expect(events[0]).toEqual({
@@ -377,16 +342,13 @@ describe("transformChunks", () => {
       source: "test-source",
     };
 
-    const events$ = of(rawEvent);
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(rawEvent)));
     expect(events.length).toBe(1);
     expect(events[0]).toEqual(rawEvent);
   });
 
   it("should handle a complex sequence of mixed events", async () => {
-    const events: BaseEvent[] = [
+    const inputEvents: BaseEvent[] = [
       // Text message chunk
       {
         type: EventType.TEXT_MESSAGE_CHUNK,
@@ -417,10 +379,7 @@ describe("transformChunks", () => {
       } as RunFinishedEvent,
     ];
 
-    const events$ = of(...events);
-    const transformed$ = transformChunks(false)(events$);
-
-    const result = await firstValueFrom(transformed$.pipe(toArray()));
+    const result = await collectAsync(transformChunks(false)(ofAsync(...inputEvents)));
     expect(result.length).toBe(10);
 
     // First text message (3 events)
@@ -456,10 +415,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk, closeEvent)));
     expect(events.length).toBe(3);
 
     expect(events[0]).toEqual({
@@ -493,10 +449,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(chunk), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(chunk, closeEvent)));
     expect(events.length).toBe(3);
 
     expect(events[0]).toEqual({
@@ -547,10 +500,7 @@ describe("transformChunks", () => {
       runId: "run-123",
     };
 
-    const events$ = concat(of(...chunks), of(closeEvent));
-    const transformed$ = transformChunks(false)(events$);
-
-    const events = await firstValueFrom(transformed$.pipe(toArray()));
+    const events = await collectAsync(transformChunks(false)(ofAsync(...chunks, closeEvent)));
     expect(events.length).toBe(7); // 1 start + 4 content + 1 end + 1 close event
 
     // Count events by type
@@ -595,7 +545,7 @@ describe("transformChunks", () => {
 
   it("should handle interleaved chunks with different message and tool call IDs", async () => {
     // Create a complex sequence that alternates between different types of chunks
-    const events: BaseEvent[] = [
+    const inputEvents: BaseEvent[] = [
       // First text message
       {
         type: EventType.TEXT_MESSAGE_CHUNK,
@@ -649,10 +599,7 @@ describe("transformChunks", () => {
       } as RunFinishedEvent,
     ];
 
-    const events$ = of(...events);
-    const transformed$ = transformChunks(false)(events$);
-
-    const results = await firstValueFrom(transformed$.pipe(toArray()));
+    const results = await collectAsync(transformChunks(false)(ofAsync(...inputEvents)));
 
     // Count events by type
     const eventCounts = results.reduce(

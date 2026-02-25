@@ -1,6 +1,7 @@
 import { BaseEvent } from "@ag-ui/core";
-import {AGUI_MEDIA_TYPE, encode,} from "@ag-ui/proto";
+import {AGUI_MEDIA_TYPE, encode} from "@ag-ui/proto";
 import { preferredMediaTypes } from "./media-type";
+
 export interface EventEncoderParams {
   accept?: string;
 }

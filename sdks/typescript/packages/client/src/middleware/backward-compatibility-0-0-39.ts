@@ -1,7 +1,6 @@
 import { Middleware } from "./middleware";
 import { AbstractAgent } from "@/agent";
 import type { RunAgentInput, BaseEvent } from "@ag-ui/core";
-import type { Observable } from "rxjs";
 
 type InputMessage = RunAgentInput["messages"][number];
 
@@ -42,7 +41,7 @@ function sanitizeMessageContent(message: InputMessage): InputMessage {
  * Currently it simply forwards all events to the next middleware/agent.
  */
 export class BackwardCompatibility_0_0_39 extends Middleware {
-  override run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
+  override run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
     const { parentRunId: _parentRunId, ...rest } = input;
     const sanitizedInput: RunAgentInput = {
       ...rest,

@@ -1,4 +1,5 @@
 import { runHttpRequest, HttpEventType } from "../http-request";
+import { collectAsync } from "@/async-utils";
 import { describe, it, expect, vi, beforeEach, afterEach, Mock } from "vitest";
 
 describe("runHttpRequest", () => {
@@ -41,27 +42,16 @@ describe("runHttpRequest", () => {
       body: {
         getReader: vi.fn().mockReturnValue({
           read: vi.fn().mockResolvedValue({ done: true }),
-          cancel: vi.fn(),
+          cancel: vi.fn().mockResolvedValue(undefined),
         }),
       },
     };
 
     fetchMock.mockResolvedValue(mockResponse);
 
-    // Create the run agent function
-
-    // Execute the function which should trigger a fetch call
-    const observable = runHttpRequest("https://example.com/api", config);
-
-    // Subscribe to trigger the fetch
-    const subscription = observable.subscribe({
-      next: () => {},
-      error: () => {},
-      complete: () => {},
-    });
-
-    // Give time for async operations to complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Execute the async generator and consume it
+    const iterable = runHttpRequest("https://example.com/api", config);
+    await collectAsync(iterable);
 
     // Verify fetch was called with the expected parameters
     expect(fetchMock).toHaveBeenCalledWith("https://example.com/api", {
@@ -72,9 +62,6 @@ describe("runHttpRequest", () => {
       },
       body: JSON.stringify({ key: "value" }),
     });
-
-    // Clean up subscription
-    subscription.unsubscribe();
   });
 
   it("should pass an abort signal when provided", async () => {
@@ -98,31 +85,22 @@ describe("runHttpRequest", () => {
       body: {
         getReader: vi.fn().mockReturnValue({
           read: vi.fn().mockResolvedValue({ done: true }),
-          cancel: vi.fn(),
+          cancel: vi.fn().mockResolvedValue(undefined),
         }),
       },
     };
 
     fetchMock.mockResolvedValue(mockResponse);
 
-    // Create the run agent function
-    const observable = runHttpRequest("https://example.com/api", config);
-
-    // Subscribe to trigger the fetch
-    const subscription = observable.subscribe();
-
-    // Give time for async operations to complete
-    await new Promise((resolve) => setTimeout(resolve, 10));
+    // Execute the async generator and consume it
+    const iterable = runHttpRequest("https://example.com/api", config);
+    await collectAsync(iterable);
 
     // Verify fetch was called with the expected configuration
-    // The implementation passes the config directly, including abortSignal property
     expect(fetchMock).toHaveBeenCalledWith("https://example.com/api", {
       method: "GET",
       abortSignal: abortController.signal,
     });
-
-    // Clean up subscription
-    subscription.unsubscribe();
   });
 
   it("should emit headers and data events from the response", async () => {
@@ -137,7 +115,7 @@ describe("runHttpRequest", () => {
         .mockResolvedValueOnce({ done: false, value: chunk1 })
         .mockResolvedValueOnce({ done: false, value: chunk2 })
         .mockResolvedValueOnce({ done: true }),
-      cancel: vi.fn(),
+      cancel: vi.fn().mockResolvedValue(undefined),
     };
 
     // Mock response with our custom reader and headers
@@ -161,19 +139,9 @@ describe("runHttpRequest", () => {
       method: "GET",
     };
 
-    // Create and execute the run agent function
-    const observable = runHttpRequest("https://example.com/api", config);
-
-    // Collect the emitted events
-    const emittedEvents: any[] = [];
-    const subscription = observable.subscribe({
-      next: (event) => emittedEvents.push(event),
-      error: (err) => expect.fail(`Should not have errored: ${err}`),
-      complete: () => {},
-    });
-
-    // Wait for all async operations to complete
-    await new Promise((resolve) => setTimeout(resolve, 100));
+    // Execute the async generator and collect events
+    const iterable = runHttpRequest("https://example.com/api", config);
+    const emittedEvents = await collectAsync(iterable);
 
     // Verify we received the expected events
     expect(emittedEvents.length).toBe(3);
@@ -192,9 +160,6 @@ describe("runHttpRequest", () => {
 
     // Verify reader.read was called the expected number of times
     expect(mockReader.read).toHaveBeenCalledTimes(3);
-
-    // Clean up
-    subscription.unsubscribe();
   });
 
   it("should throw HTTP error on occurs", async () => {
@@ -215,32 +180,21 @@ describe("runHttpRequest", () => {
     // Override fetch for this test
     fetchMock.mockResolvedValue(mockResponse);
 
-    const observable = runHttpRequest("https://example.com/api", { method: "GET" });
+    const iterable = runHttpRequest("https://example.com/api", { method: "GET" });
 
-    const nextSpy = vi.fn();
+    // Consuming should throw
+    let caughtError: any = null;
+    try {
+      await collectAsync(iterable);
+    } catch (err: any) {
+      caughtError = err;
+    }
 
-    await new Promise<void>((resolve) => {
-      const sub = observable.subscribe({
-        next: nextSpy,
-        error: (err: any) => {
-          // error should carry status + parsed payload
-          expect(err).toBeInstanceOf(Error);
-          expect(err.status).toBe(404);
-          expect(err.payload).toEqual({ message: "User not found" });
-          // readable message is okay too (optional)
-          expect(err.message).toContain("HTTP 404");
-          expect(err.message).toContain("User not found");
-          resolve();
-          sub.unsubscribe();
-        },
-        complete: () => {
-          expect.fail("Should not complete on HTTP error");
-        },
-      });
-    });
-
-    // Should not have emitted any data events on error short-circuit
-    expect(nextSpy).not.toHaveBeenCalled();
+    expect(caughtError).toBeInstanceOf(Error);
+    expect(caughtError.status).toBe(404);
+    expect(caughtError.payload).toEqual({ message: "User not found" });
+    expect(caughtError.message).toContain("HTTP 404");
+    expect(caughtError.message).toContain("User not found");
 
     // Ensure we read the error body exactly once
     expect((mockResponse as any).text).toHaveBeenCalledTimes(1);

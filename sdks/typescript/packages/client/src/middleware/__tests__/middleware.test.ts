@@ -1,51 +1,39 @@
 import { AbstractAgent } from "@/agent";
 import { Middleware } from "@/middleware";
 import { BaseEvent, EventType, RunAgentInput } from "@ag-ui/core";
-import { Observable } from "rxjs";
+import { collectAsync } from "@/async-utils";
 
 describe("Middleware", () => {
   class TestAgent extends AbstractAgent {
-    run(input: RunAgentInput): Observable<BaseEvent> {
-      return new Observable<BaseEvent>((subscriber) => {
-        subscriber.next({
-          type: EventType.RUN_STARTED,
-          threadId: input.threadId,
-          runId: input.runId,
-        });
+    async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+      yield {
+        type: EventType.RUN_STARTED,
+        threadId: input.threadId,
+        runId: input.runId,
+      };
 
-        subscriber.next({
-          type: EventType.RUN_FINISHED,
-          threadId: input.threadId,
-          runId: input.runId,
-          result: { success: true },
-        });
-
-        subscriber.complete();
-      });
+      yield {
+        type: EventType.RUN_FINISHED,
+        threadId: input.threadId,
+        runId: input.runId,
+        result: { success: true },
+      };
     }
   }
 
   class TestMiddleware extends Middleware {
-    run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
-      return new Observable<BaseEvent>((subscriber) => {
-        const subscription = next.run(input).subscribe({
-          next: (event) => {
-            if (event.type === EventType.RUN_STARTED) {
-              subscriber.next({
-                ...event,
-                metadata: { ...(event as any).metadata, middleware: true },
-              });
-              return;
-            }
+    async *run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
+      for await (const event of next.run(input)) {
+        if (event.type === EventType.RUN_STARTED) {
+          yield {
+            ...event,
+            metadata: { ...(event as any).metadata, middleware: true },
+          };
+          continue;
+        }
 
-            subscriber.next(event);
-          },
-          error: (error) => subscriber.error(error),
-          complete: () => subscriber.complete(),
-        });
-
-        return () => subscription.unsubscribe();
-      });
+        yield event;
+      }
     }
   }
 
@@ -63,13 +51,7 @@ describe("Middleware", () => {
     const agent = new TestAgent();
     const middleware = new TestMiddleware();
 
-    const events: BaseEvent[] = [];
-    await new Promise<void>((resolve) => {
-      middleware.run(input, agent).subscribe({
-        next: (event) => events.push(event),
-        complete: () => resolve(),
-      });
-    });
+    const events = await collectAsync(middleware.run(input, agent));
 
     expect(events.length).toBe(2);
     expect(events[0].type).toBe(EventType.RUN_STARTED);

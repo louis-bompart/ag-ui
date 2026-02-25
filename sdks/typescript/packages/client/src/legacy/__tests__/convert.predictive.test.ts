@@ -1,5 +1,5 @@
 import { convertToLegacyEvents } from "../convert";
-import { of } from "rxjs";
+import { ofAsync, collectAsync } from "@/async-utils";
 import {
   BaseEvent,
   EventType,
@@ -12,7 +12,7 @@ import {
   StateSnapshotEvent,
 } from "@ag-ui/core";
 import { LegacyRuntimeProtocolEvent } from "../types";
-import { toArray } from "rxjs/operators";
+
 
 describe("convertToLegacyEvents", () => {
   it("should handle predictive state and tool call events", async () => {
@@ -58,13 +58,11 @@ describe("convertToLegacyEvents", () => {
       } as ToolCallEndEvent,
     ];
 
-    const result = convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents));
-
-    const events = (await result.pipe(toArray()).toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
     expect(events).toHaveLength(7);
 
     // First event should be the predict state meta event
@@ -174,13 +172,11 @@ describe("convertToLegacyEvents", () => {
       } as ToolCallEndEvent,
     ];
 
-    const result = convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents));
-
-    const events = (await result.pipe(toArray()).toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
     expect(events).toHaveLength(7);
 
     // First event should be the predict state meta event
@@ -335,13 +331,11 @@ describe("convertToLegacyEvents", () => {
       } as ToolCallEndEvent,
     ];
 
-    const result = convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents));
-
-    const events = (await result.pipe(toArray()).toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
     expect(events).toHaveLength(11);
 
     // First event should be the agent state message (after step start)

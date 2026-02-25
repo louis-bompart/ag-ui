@@ -1,8 +1,6 @@
 /* eslint-disable @typescript-eslint/no-unused-vars */
 import { vi } from "vitest";
 import { AbstractAgent, BaseEvent, EventType, RunAgentInput, Message, Tool, AssistantMessage } from "@ag-ui/client";
-import { Observable } from "rxjs";
-import { firstValueFrom, toArray } from "rxjs";
 
 /**
  * Mock MCP Client instance
@@ -93,14 +91,11 @@ export class MockAgent extends AbstractAgent {
     this.events = events;
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     this.runCalls.push(input);
-    return new Observable((subscriber) => {
-      for (const event of this.events) {
-        subscriber.next(event);
-      }
-      subscriber.complete();
-    });
+    for (const event of this.events) {
+      yield event;
+    }
   }
 
   setEvents(events: BaseEvent[]): void {
@@ -121,31 +116,13 @@ export class AsyncMockAgent extends AbstractAgent {
     this.delayMs = delayMs;
   }
 
-  run(_input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable((subscriber) => {
-      let cancelled = false;
-
-      const emitEvents = async () => {
-        for (const event of this.events) {
-          if (cancelled) break;
-          if (this.delayMs > 0) {
-            await new Promise((resolve) => setTimeout(resolve, this.delayMs));
-          }
-          if (!cancelled) {
-            subscriber.next(event);
-          }
-        }
-        if (!cancelled) {
-          subscriber.complete();
-        }
-      };
-
-      emitEvents();
-
-      return () => {
-        cancelled = true;
-      };
-    });
+  async *run(_input: RunAgentInput): AsyncIterable<BaseEvent> {
+    for (const event of this.events) {
+      if (this.delayMs > 0) {
+        await new Promise((resolve) => setTimeout(resolve, this.delayMs));
+      }
+      yield event;
+    }
   }
 }
 
@@ -160,10 +137,8 @@ export class ErrorMockAgent extends AbstractAgent {
     this.error = error;
   }
 
-  run(_input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable((subscriber) => {
-      subscriber.error(this.error);
-    });
+  async *run(_input: RunAgentInput): AsyncIterable<BaseEvent> {
+    throw this.error;
   }
 }
 
@@ -351,10 +326,14 @@ export function createAGUITool(name: string, description?: string): Tool {
 }
 
 /**
- * Collect all events from an Observable
+ * Collect all events from an AsyncIterable
  */
-export async function collectEvents(observable: Observable<BaseEvent>): Promise<BaseEvent[]> {
-  return firstValueFrom(observable.pipe(toArray()));
+export async function collectEvents(iterable: AsyncIterable<BaseEvent>): Promise<BaseEvent[]> {
+  const events: BaseEvent[] = [];
+  for await (const event of iterable) {
+    events.push(event);
+  }
+  return events;
 }
 
 /**

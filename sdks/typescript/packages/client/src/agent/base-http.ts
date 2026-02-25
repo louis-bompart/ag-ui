@@ -3,7 +3,6 @@ import { runHttpRequest } from "@/run/http-request";
 import { HttpAgentConfig, RunAgentParameters } from "./types";
 import { RunAgentInput, BaseEvent } from "@ag-ui/core";
 import { structuredClone_ } from "@/utils";
-import { Observable } from "rxjs";
 import { AgentSubscriber } from "./subscriber";
 import { TransformHttpEventStreamHandlers } from "@/transform/base-type";
 import { transformHttpEventStreamFactory } from "@/transform/factory";
@@ -57,7 +56,7 @@ export class BaseHttpAgent extends AbstractAgent {
     this.httpEventStreamHandlers = config.streamHandlers ?? [];
   }
 
-  run(input: RunAgentInput): Observable<BaseEvent> {
+  run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     const httpEvents = runHttpRequest(this.url, this.requestInit(input));
     return transformHttpEventStreamFactory(this.httpEventStreamHandlers)(httpEvents);
   }

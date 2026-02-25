@@ -1,7 +1,5 @@
 import { AbstractAgent } from "@/agent";
 import { RunAgentInput, BaseEvent, Message } from "@ag-ui/core";
-import { Observable, ReplaySubject } from "rxjs";
-import { concatMap } from "rxjs/operators";
 import { transformChunks } from "@/chunks";
 import { defaultApplyEvents } from "@/apply";
 import { structuredClone_ } from "@/utils";
@@ -9,7 +7,7 @@ import { structuredClone_ } from "@/utils";
 export type MiddlewareFunction = (
   input: RunAgentInput,
   next: AbstractAgent,
-) => Observable<BaseEvent>;
+) => AsyncIterable<BaseEvent>;
 
 export interface EventWithState {
   event: BaseEvent;
@@ -18,60 +16,47 @@ export interface EventWithState {
 }
 
 export abstract class Middleware {
-  abstract run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent>;
+  abstract run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent>;
 
   /**
    * Runs the next agent in the chain with automatic chunk transformation.
    */
-  protected runNext(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
-    return next.run(input).pipe(
-      transformChunks(false), // Always transform chunks to full events
-    );
+  protected runNext(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
+    return transformChunks(false)(next.run(input));
   }
 
   /**
    * Runs the next agent and tracks state, providing current messages and state with each event.
    * The messages and state represent the state AFTER the event has been applied.
    */
-  protected runNextWithState(
+  protected async *runNextWithState(
     input: RunAgentInput,
     next: AbstractAgent,
-  ): Observable<EventWithState> {
+  ): AsyncIterable<EventWithState> {
     let currentMessages = structuredClone_(input.messages || []);
     let currentState = structuredClone_(input.state || {});
 
-    // Use a ReplaySubject to feed events one by one
-    const eventSubject = new ReplaySubject<BaseEvent>();
+    // Collect events and feed them through defaultApplyEvents one by one
+    for await (const event of this.runNext(input, next)) {
+      // Create a single-event iterable to feed to defaultApplyEvents
+      const singleEvent = (async function* () { yield event; })();
+      const mutations = defaultApplyEvents(input, singleEvent, next, []);
 
-    // Set up defaultApplyEvents to process events
-    const mutations$ = defaultApplyEvents(input, eventSubject, next, []);
-
-    // Subscribe to track state changes
-    mutations$.subscribe((mutation) => {
-      if (mutation.messages !== undefined) {
-        currentMessages = mutation.messages;
+      for await (const mutation of mutations) {
+        if (mutation.messages !== undefined) {
+          currentMessages = mutation.messages;
+        }
+        if (mutation.state !== undefined) {
+          currentState = mutation.state;
+        }
       }
-      if (mutation.state !== undefined) {
-        currentState = mutation.state;
-      }
-    });
 
-    return this.runNext(input, next).pipe(
-      concatMap(async (event) => {
-        // Feed the event to defaultApplyEvents and wait for it to process
-        eventSubject.next(event);
-
-        // Give defaultApplyEvents a chance to process
-        await new Promise((resolve) => setTimeout(resolve, 0));
-
-        // Return event with current state
-        return {
-          event,
-          messages: structuredClone_(currentMessages),
-          state: structuredClone_(currentState),
-        };
-      }),
-    );
+      yield {
+        event,
+        messages: structuredClone_(currentMessages),
+        state: structuredClone_(currentState),
+      };
+    }
   }
 }
 
@@ -81,7 +66,7 @@ export class FunctionMiddleware extends Middleware {
     super();
   }
 
-  run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
+  run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
     return this.fn(input, next);
   }
 }

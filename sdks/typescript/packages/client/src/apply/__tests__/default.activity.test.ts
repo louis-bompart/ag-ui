@@ -1,6 +1,4 @@
-import { Subject } from "rxjs";
-import { toArray } from "rxjs/operators";
-import { firstValueFrom } from "rxjs";
+import { AsyncChannel, collectAsync } from "@/async-utils";
 import {
   ActivityDeltaEvent,
   ActivitySnapshotEvent,
@@ -20,7 +18,7 @@ const createAgent = (messages: Message[] = []) =>
 
 describe("defaultApplyEvents with activity events", () => {
   it("creates and updates activity messages via snapshot and delta", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -31,24 +29,24 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
       content: { tasks: ["search"] },
     } as ActivitySnapshotEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_DELTA,
       messageId: "activity-1",
       activityType: "PLAN",
       patch: [{ op: "replace", path: "/tasks/0", value: "✓ search" }],
     } as ActivityDeltaEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -64,7 +62,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("appends operations via delta when snapshot starts with an empty array", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -75,20 +73,20 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
     const firstOperation = { id: "op-1", status: "PENDING" };
     const secondOperation = { id: "op-2", status: "COMPLETED" };
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-ops",
       activityType: "PLAN",
       content: { operations: [] },
     } as ActivitySnapshotEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_DELTA,
       messageId: "activity-ops",
       activityType: "PLAN",
@@ -97,7 +95,7 @@ describe("defaultApplyEvents with activity events", () => {
       ],
     } as ActivityDeltaEvent);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_DELTA,
       messageId: "activity-ops",
       activityType: "PLAN",
@@ -106,7 +104,7 @@ describe("defaultApplyEvents with activity events", () => {
       ],
     } as ActivityDeltaEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -128,7 +126,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("does not replace existing activity message when replace is false", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -146,10 +144,10 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages as Message[]);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -157,7 +155,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: false,
     } as ActivitySnapshotEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     expect(stateUpdates.length).toBe(1);
@@ -166,7 +164,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("adds activity message when replace is false and none exists", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -177,10 +175,10 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages as Message[]);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -188,7 +186,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: false,
     } as ActivitySnapshotEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     expect(stateUpdates.length).toBe(1);
@@ -198,7 +196,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("replaces existing activity message when replace is true", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -216,10 +214,10 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages as Message[]);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -227,7 +225,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: true,
     } as ActivitySnapshotEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     expect(stateUpdates.length).toBe(1);
@@ -236,7 +234,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("replaces non-activity message when replace is true", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -253,10 +251,10 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages as Message[]);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -264,7 +262,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: true,
     } as ActivitySnapshotEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     expect(stateUpdates.length).toBe(1);
@@ -274,7 +272,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("does not alter non-activity message when replace is false", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -291,10 +289,10 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const agent = createAgent(initialState.messages as Message[]);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({
+    channel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -302,7 +300,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: false,
     } as ActivitySnapshotEvent);
 
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     expect(stateUpdates.length).toBe(1);
@@ -312,7 +310,7 @@ describe("defaultApplyEvents with activity events", () => {
   });
 
   it("maintains replace semantics across runs", async () => {
-    const firstRunEvents$ = new Subject<BaseEvent>();
+    const firstRunChannel = new AsyncChannel<BaseEvent>();
     const baseInput: RunAgentInput = {
       messages: [],
       state: {},
@@ -323,22 +321,22 @@ describe("defaultApplyEvents with activity events", () => {
     };
 
     const baseAgent = createAgent(baseInput.messages);
-    const firstResult$ = defaultApplyEvents(baseInput, firstRunEvents$, baseAgent, []);
-    const firstUpdatesPromise = firstValueFrom(firstResult$.pipe(toArray()));
+    const firstResult$ = defaultApplyEvents(baseInput, firstRunChannel, baseAgent, []);
+    const firstUpdatesPromise = collectAsync(firstResult$);
 
-    firstRunEvents$.next({
+    firstRunChannel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
       content: { tasks: ["initial"] },
       replace: true,
     } as ActivitySnapshotEvent);
-    firstRunEvents$.complete();
+    firstRunChannel.close();
 
     const firstUpdates = await firstUpdatesPromise;
     const nextMessages = firstUpdates[0]?.messages ?? [];
 
-    const secondRunEvents$ = new Subject<BaseEvent>();
+    const secondRunChannel = new AsyncChannel<BaseEvent>();
     const secondInput: RunAgentInput = {
       ...baseInput,
       messages: nextMessages,
@@ -347,13 +345,13 @@ describe("defaultApplyEvents with activity events", () => {
     const secondAgent = createAgent(secondInput.messages);
     const secondResult$ = defaultApplyEvents(
       secondInput,
-      secondRunEvents$,
+      secondRunChannel,
       secondAgent,
       [],
     );
-    const secondUpdatesPromise = firstValueFrom(secondResult$.pipe(toArray()));
+    const secondUpdatesPromise = collectAsync(secondResult$);
 
-    secondRunEvents$.next({
+    secondRunChannel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -361,7 +359,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: false,
     } as ActivitySnapshotEvent);
 
-    secondRunEvents$.next({
+    secondRunChannel.push({
       type: EventType.ACTIVITY_SNAPSHOT,
       messageId: "activity-1",
       activityType: "PLAN",
@@ -369,7 +367,7 @@ describe("defaultApplyEvents with activity events", () => {
       replace: true,
     } as ActivitySnapshotEvent);
 
-    secondRunEvents$.complete();
+    secondRunChannel.close();
 
     const secondUpdates = await secondUpdatesPromise;
     expect(secondUpdates.length).toBe(2);

@@ -1,10 +1,9 @@
 import { beforeEach, expect, it, vi } from "vitest";
 import { AbstractAgent } from "@/agent";
 import { BaseEvent, EventType, Message, RunAgentInput } from "@ag-ui/core";
-import { Observable, of, from } from "rxjs";
+import { ofAsync, collectAsync } from "@/async-utils";
 import { BackwardCompatibility_0_0_45 } from "../backward-compatibility-0-0-45";
 import { describe } from "vitest";
-import { lastValueFrom, toArray } from "rxjs";
 
 // Mock uuid module
 vi.mock("uuid", () => ({
@@ -30,8 +29,8 @@ class MockAgent extends AbstractAgent {
     return "0.0.45";
   }
 
-  override run(_input: RunAgentInput): Observable<BaseEvent> {
-    return from(this.events);
+  override run(_input: RunAgentInput): AsyncIterable<BaseEvent> {
+    return ofAsync(...this.events);
   }
 }
 
@@ -56,7 +55,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     const events: BaseEvent[] = [{ type: THINKING_START as EventType, title: "Processing..." }];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
@@ -69,7 +68,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     const events: BaseEvent[] = [{ type: THINKING_TEXT_MESSAGE_START as EventType }];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(1);
     expect(result[0]).toEqual({
@@ -86,7 +85,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     ];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(2);
     expect(result[1]).toEqual({
@@ -103,7 +102,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     ];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(2);
     expect(result[1]).toEqual({
@@ -119,7 +118,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     ];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(2);
     expect(result[0].type).toBe(EventType.REASONING_START);
@@ -137,7 +136,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     ];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(3);
     expect(result[0].type).toBe(EventType.TEXT_MESSAGE_START);
@@ -156,7 +155,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     ];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(6);
     expect(result.map((e) => e.type)).toEqual([
@@ -189,7 +188,7 @@ describe("BackwardCompatibility_0_0_45", () => {
     ];
 
     const agent = new MockAgent(events);
-    const result = await lastValueFrom(middleware.run(createInput(), agent).pipe(toArray()));
+    const result = await collectAsync(middleware.run(createInput(), agent));
 
     expect(result).toHaveLength(10);
     expect(result[0].type).toBe(EventType.RUN_STARTED);
@@ -210,8 +209,8 @@ describe("BackwardCompatibility_0_0_45 (auto insertion)", () => {
         return "0.0.45";
       }
 
-      override run(input: RunAgentInput): Observable<BaseEvent> {
-        return of(
+      override run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+        return ofAsync(
           {
             type: EventType.RUN_STARTED,
             threadId: input.threadId,

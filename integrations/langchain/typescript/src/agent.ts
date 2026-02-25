@@ -12,7 +12,6 @@ import { BaseMessage } from "@langchain/core/messages";
 import { DynamicStructuredTool } from "@langchain/core/tools";
 import { LangChainResponse, streamLangChainResponse } from "./streaming";
 import { convertAGUIToolsToLangChain } from "./tools";
-import { Observable } from "rxjs";
 import { convertAGUIMessagesToLangChain } from "./messages";
 
 /**
@@ -116,108 +115,94 @@ export class LangChainAgent extends AbstractAgent {
     super();
   }
 
-  public run(input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable<BaseEvent>((subscriber) => {
-      // Emit RUN_STARTED
-      const startEvent: RunStartedEvent = {
-        type: EventType.RUN_STARTED,
-        threadId: input.threadId,
-        runId: input.runId,
-      };
-      subscriber.next(startEvent);
+  public async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    // Emit RUN_STARTED
+    const startEvent: RunStartedEvent = {
+      type: EventType.RUN_STARTED,
+      threadId: input.threadId,
+      runId: input.runId,
+    };
+    yield startEvent;
 
-      // Set up abort controller
-      const abortController = new AbortController();
-      this.abortController = abortController;
+    // Set up abort controller
+    const abortController = new AbortController();
+    this.abortController = abortController;
 
-      // Execute async logic
-      (async () => {
-        try {
-          // Convert AG-UI messages to LangChain messages
-          const langchainMessages = convertAGUIMessagesToLangChain(input.messages);
+    try {
+      // Convert AG-UI messages to LangChain messages
+      const langchainMessages = convertAGUIMessagesToLangChain(input.messages);
 
-          // Add system message if using model config with prompt
-          if (!isChainFnConfig(this.config) && this.config.prompt) {
-            const systemPrompt = this.buildSystemPrompt(
-              this.config.prompt,
-              input.context,
-              input.state
-            );
-            langchainMessages.unshift({
-              content: systemPrompt,
-              getType: () => "system",
-            } as BaseMessage);
-          }
+      // Add system message if using model config with prompt
+      if (!isChainFnConfig(this.config) && this.config.prompt) {
+        const systemPrompt = this.buildSystemPrompt(
+          this.config.prompt,
+          input.context,
+          input.state
+        );
+        langchainMessages.unshift({
+          content: systemPrompt,
+          getType: () => "system",
+        } as BaseMessage);
+      }
 
-          // Convert AG-UI tools to LangChain tools
-          const langchainTools = convertAGUIToolsToLangChain(input.tools as any[]);
+      // Convert AG-UI tools to LangChain tools
+      const langchainTools = convertAGUIToolsToLangChain(input.tools as any[]);
 
-          let response: LangChainResponse;
+      let response: LangChainResponse;
 
-          // Execute based on configuration pattern
-          if (isChainFnConfig(this.config)) {
-            // Pattern A: User-provided chainFn
-            response = await this.config.chainFn({
-              messages: langchainMessages,
-              tools: langchainTools,
-              state: input.state,
-              context: input.context,
-              threadId: input.threadId,
-              runId: input.runId,
-            });
-          } else {
-            // Pattern B: Direct model usage
-            const modelConfig = this.config as LangChainAgentModelConfig;
-            const boundModel = modelConfig.bindToolsOptions
-              ? modelConfig.model.bindTools?.(langchainTools, modelConfig.bindToolsOptions)
-              : modelConfig.model.bindTools?.(langchainTools);
+      // Execute based on configuration pattern
+      if (isChainFnConfig(this.config)) {
+        // Pattern A: User-provided chainFn
+        response = await this.config.chainFn({
+          messages: langchainMessages,
+          tools: langchainTools,
+          state: input.state,
+          context: input.context,
+          threadId: input.threadId,
+          runId: input.runId,
+        });
+      } else {
+        // Pattern B: Direct model usage
+        const modelConfig = this.config as LangChainAgentModelConfig;
+        const boundModel = modelConfig.bindToolsOptions
+          ? modelConfig.model.bindTools?.(langchainTools, modelConfig.bindToolsOptions)
+          : modelConfig.model.bindTools?.(langchainTools);
 
-            const model = boundModel || modelConfig.model;
-            response = await model.stream(langchainMessages, {
-              signal: abortController.signal,
-            });
-          }
+        const model = boundModel || modelConfig.model;
+        response = await model.stream(langchainMessages, {
+          signal: abortController.signal,
+        });
+      }
 
-          // Stream the response and emit AG-UI events
-          for await (const event of streamLangChainResponse(response)) {
-            if (abortController.signal.aborted) {
-              break;
-            }
-            subscriber.next(event);
-          }
-
-          // Emit RUN_FINISHED if not aborted
-          if (!abortController.signal.aborted) {
-            const finishedEvent: RunFinishedEvent = {
-              type: EventType.RUN_FINISHED,
-              threadId: input.threadId,
-              runId: input.runId,
-            };
-            subscriber.next(finishedEvent);
-          }
-
-          subscriber.complete();
-        } catch (error) {
-          if (!abortController.signal.aborted) {
-            const errorEvent: RunErrorEvent = {
-              type: EventType.RUN_ERROR,
-              message: error instanceof Error ? error.message : String(error),
-            };
-            subscriber.next(errorEvent);
-            subscriber.error(error);
-          } else {
-            subscriber.complete();
-          }
-        } finally {
-          this.abortController = undefined;
+      // Stream the response and emit AG-UI events
+      for await (const event of streamLangChainResponse(response)) {
+        if (abortController.signal.aborted) {
+          break;
         }
-      })();
+        yield event;
+      }
 
-      // Cleanup function
-      return () => {
-        abortController.abort();
-      };
-    });
+      // Emit RUN_FINISHED if not aborted
+      if (!abortController.signal.aborted) {
+        const finishedEvent: RunFinishedEvent = {
+          type: EventType.RUN_FINISHED,
+          threadId: input.threadId,
+          runId: input.runId,
+        };
+        yield finishedEvent;
+      }
+    } catch (error) {
+      if (!abortController.signal.aborted) {
+        const errorEvent: RunErrorEvent = {
+          type: EventType.RUN_ERROR,
+          message: error instanceof Error ? error.message : String(error),
+        };
+        yield errorEvent;
+        throw error;
+      }
+    } finally {
+      this.abortController = undefined;
+    }
   }
 
   /**

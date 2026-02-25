@@ -9,7 +9,7 @@ import {
   ToolCall,
   AssistantMessage,
 } from "@ag-ui/core";
-import { Observable, of } from "rxjs";
+import { ofAsync } from "@/async-utils";
 import { describe, it, expect, vi, beforeEach } from "vitest";
 
 // Mock uuid module
@@ -39,17 +39,17 @@ const waitForAsyncNotifications = async () => {
 
 // Mock the verify and chunks modules
 vi.mock("@/verify", () => ({
-  verifyEvents: vi.fn(() => (source$: Observable<any>) => source$),
+  verifyEvents: vi.fn(() => (source: AsyncIterable<any>) => source),
 }));
 
 vi.mock("@/chunks", () => ({
-  transformChunks: vi.fn(() => (source$: Observable<any>) => source$),
+  transformChunks: vi.fn(() => (source: AsyncIterable<any>) => source),
 }));
 
 // Create a test agent implementation
 class TestAgent extends AbstractAgent {
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return of();
+  run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    return ofAsync();
   }
 }
 

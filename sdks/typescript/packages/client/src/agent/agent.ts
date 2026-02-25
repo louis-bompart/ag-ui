@@ -1,18 +1,13 @@
 import { defaultApplyEvents } from "@/apply/default";
-import { Message, State, RunAgentInput, BaseEvent, ToolCall, AssistantMessage } from "@ag-ui/core";
+import { Message, State, RunAgentInput, BaseEvent } from "@ag-ui/core";
 
 import { AgentConfig, RunAgentParameters } from "./types";
 import { v4 as uuidv4 } from "uuid";
 import { structuredClone_ } from "@/utils";
 import { compareVersions } from "compare-versions";
-import { catchError, map, tap } from "rxjs/operators";
-import { finalize } from "rxjs/operators";
-import { takeUntil } from "rxjs/operators";
-import { pipe, Observable, from, of, EMPTY, Subject } from "rxjs";
 import { verifyEvents } from "@/verify";
 import { convertToLegacyEvents } from "@/legacy/convert";
 import { LegacyRuntimeProtocolEvent } from "@/legacy/types";
-import { lastValueFrom } from "rxjs";
 import { transformChunks } from "@/chunks";
 import { AgentStateMutation, AgentSubscriber, runSubscribersWithMutation } from "./subscriber";
 import { AGUIConnectNotImplementedError } from "@ag-ui/core";
@@ -40,8 +35,8 @@ export abstract class AbstractAgent {
   public subscribers: AgentSubscriber[] = [];
   public isRunning: boolean = false;
   private middlewares: Middleware[] = [];
-  // Emits to immediately detach from the active run (stop processing its stream)
-  private activeRunDetach$?: Subject<void>;
+  // AbortController to immediately detach from the active run (stop processing its stream)
+  private activeRunAbortController?: AbortController;
   private activeRunCompletionPromise?: Promise<void>;
 
   get maxVersion() {
@@ -83,7 +78,7 @@ export abstract class AbstractAgent {
     };
   }
 
-  abstract run(input: RunAgentInput): Observable<BaseEvent>;
+  abstract run(input: RunAgentInput): AsyncIterable<BaseEvent>;
 
   public use(...middlewares: (Middleware | MiddlewareFunction)[]): this {
     const normalizedMiddlewares = middlewares.map((middleware) =>
@@ -117,15 +112,15 @@ export abstract class AbstractAgent {
       await this.onInitialize(input, subscribers);
 
       // Per-run detachment signal + completion promise
-      this.activeRunDetach$ = new Subject<void>();
+      this.activeRunAbortController = new AbortController();
       let resolveActiveRunCompletion: (() => void) | undefined;
       this.activeRunCompletionPromise = new Promise<void>((resolve) => {
         resolveActiveRunCompletion = resolve;
       });
 
-      const pipeline = pipe(
-        () => {
-          // Build middleware chain using reduceRight so middlewares can intercept runs.
+      try {
+        // Build the source iterable (with middleware chain)
+        const source = (() => {
           if (this.middlewares.length === 0) {
             return this.run(input);
           }
@@ -139,28 +134,31 @@ export abstract class AbstractAgent {
           );
 
           return chainedAgent.run(input);
-        },
-        transformChunks(this.debug),
-        verifyEvents(this.debug),
-        // Stop processing immediately when this run is detached
-        (source$) => source$.pipe(takeUntil(this.activeRunDetach$!)),
-        (source$) => this.apply(input, source$, subscribers),
-        (source$) => this.processApplyEvents(input, source$, subscribers),
-        catchError((error) => {
-          this.isRunning = false;
-          return this.onError(input, error, subscribers);
-        }),
-        finalize(() => {
-          this.isRunning = false;
-          void this.onFinalize(input, subscribers);
-          resolveActiveRunCompletion?.();
-          resolveActiveRunCompletion = undefined;
-          this.activeRunCompletionPromise = undefined;
-          this.activeRunDetach$ = undefined;
-        }),
-      );
+        })();
 
-      await lastValueFrom(pipeline(of(null)));
+        // Build pipeline: source -> transformChunks -> verifyEvents -> takeUntilAborted -> apply -> processApplyEvents
+        const chunked = transformChunks(this.debug)(source);
+        const verified = verifyEvents(this.debug)(chunked);
+        const abortable = takeUntilAborted(verified, this.activeRunAbortController.signal);
+        const applied = this.apply(input, abortable, subscribers);
+        const processed = this.processApplyEvents(input, applied, subscribers);
+
+        // Drain the pipeline
+        for await (const _ of processed) {
+          // consume all events
+        }
+      } catch (error: any) {
+        this.isRunning = false;
+        await this.onError(input, error, subscribers);
+      } finally {
+        this.isRunning = false;
+        await this.onFinalize(input, subscribers);
+        resolveActiveRunCompletion?.();
+        resolveActiveRunCompletion = undefined;
+        this.activeRunCompletionPromise = undefined;
+        this.activeRunAbortController = undefined;
+      }
+
       const newMessages = structuredClone_(this.messages).filter(
         (message: Message) => !currentMessageIds.has(message.id),
       );
@@ -170,9 +168,10 @@ export abstract class AbstractAgent {
     }
   }
 
-  protected connect(input: RunAgentInput): Observable<BaseEvent> {
+  protected connect(input: RunAgentInput): AsyncIterable<BaseEvent> {
     throw new AGUIConnectNotImplementedError();
   }
+
   public async connectAgent(
     parameters?: RunAgentParameters,
     subscriber?: AgentSubscriber,
@@ -197,38 +196,40 @@ export abstract class AbstractAgent {
       await this.onInitialize(input, subscribers);
 
       // Per-run detachment signal + completion promise
-      this.activeRunDetach$ = new Subject<void>();
+      this.activeRunAbortController = new AbortController();
       let resolveActiveRunCompletion: (() => void) | undefined;
       this.activeRunCompletionPromise = new Promise<void>((resolve) => {
         resolveActiveRunCompletion = resolve;
       });
 
-      const pipeline = pipe(
-        () => this.connect(input),
-        transformChunks(this.debug),
-        verifyEvents(this.debug),
-        // Stop processing immediately when this run is detached
-        (source$) => source$.pipe(takeUntil(this.activeRunDetach$!)),
-        (source$) => this.apply(input, source$, subscribers),
-        (source$) => this.processApplyEvents(input, source$, subscribers),
-        catchError((error) => {
-          this.isRunning = false;
-          if (!(error instanceof AGUIConnectNotImplementedError)) {
-            return this.onError(input, error, subscribers);
-          }
-          return EMPTY;
-        }),
-        finalize(() => {
-          this.isRunning = false;
-          void this.onFinalize(input, subscribers);
-          resolveActiveRunCompletion?.();
-          resolveActiveRunCompletion = undefined;
-          this.activeRunCompletionPromise = undefined;
-          this.activeRunDetach$ = undefined;
-        }),
-      );
+      try {
+        const source = this.connect(input);
 
-      await lastValueFrom(pipeline(of(null))); // wait for stream completion before toggling isRunning
+        // Build pipeline: source -> transformChunks -> verifyEvents -> takeUntilAborted -> apply -> processApplyEvents
+        const chunked = transformChunks(this.debug)(source);
+        const verified = verifyEvents(this.debug)(chunked);
+        const abortable = takeUntilAborted(verified, this.activeRunAbortController.signal);
+        const applied = this.apply(input, abortable, subscribers);
+        const processed = this.processApplyEvents(input, applied, subscribers);
+
+        // Drain the pipeline
+        for await (const _ of processed) {
+          // consume all events
+        }
+      } catch (error: any) {
+        this.isRunning = false;
+        if (!(error instanceof AGUIConnectNotImplementedError)) {
+          await this.onError(input, error, subscribers);
+        }
+      } finally {
+        this.isRunning = false;
+        await this.onFinalize(input, subscribers);
+        resolveActiveRunCompletion?.();
+        resolveActiveRunCompletion = undefined;
+        this.activeRunCompletionPromise = undefined;
+        this.activeRunAbortController = undefined;
+      }
+
       const newMessages = structuredClone_(this.messages).filter(
         (message: Message) => !currentMessageIds.has(message.id),
       );
@@ -241,54 +242,52 @@ export abstract class AbstractAgent {
   public abortRun() {}
 
   public async detachActiveRun(): Promise<void> {
-    if (!this.activeRunDetach$) {
+    if (!this.activeRunAbortController) {
       return;
     }
     const completion = this.activeRunCompletionPromise ?? Promise.resolve();
-    this.activeRunDetach$.next();
-    this.activeRunDetach$?.complete();
+    this.activeRunAbortController.abort();
     await completion;
   }
 
   protected apply(
     input: RunAgentInput,
-    events$: Observable<BaseEvent>,
+    events: AsyncIterable<BaseEvent>,
     subscribers: AgentSubscriber[],
-  ): Observable<AgentStateMutation> {
-    return defaultApplyEvents(input, events$, this, subscribers);
+  ): AsyncIterable<AgentStateMutation> {
+    return defaultApplyEvents(input, events, this, subscribers);
   }
 
-  protected processApplyEvents(
+  protected async *processApplyEvents(
     input: RunAgentInput,
-    events$: Observable<AgentStateMutation>,
+    events: AsyncIterable<AgentStateMutation>,
     subscribers: AgentSubscriber[],
-  ): Observable<AgentStateMutation> {
-    return events$.pipe(
-      tap((event) => {
-        if (event.messages) {
-          this.messages = event.messages;
-          subscribers.forEach((subscriber) => {
-            subscriber.onMessagesChanged?.({
-              messages: this.messages,
-              state: this.state,
-              agent: this,
-              input,
-            });
+  ): AsyncIterable<AgentStateMutation> {
+    for await (const event of events) {
+      if (event.messages) {
+        this.messages = event.messages;
+        subscribers.forEach((subscriber) => {
+          subscriber.onMessagesChanged?.({
+            messages: this.messages,
+            state: this.state,
+            agent: this,
+            input,
           });
-        }
-        if (event.state) {
-          this.state = event.state;
-          subscribers.forEach((subscriber) => {
-            subscriber.onStateChanged?.({
-              state: this.state,
-              messages: this.messages,
-              agent: this,
-              input,
-            });
+        });
+      }
+      if (event.state) {
+        this.state = event.state;
+        subscribers.forEach((subscriber) => {
+          subscriber.onStateChanged?.({
+            state: this.state,
+            messages: this.messages,
+            agent: this,
+            input,
           });
-        }
-      }),
-    );
+        });
+      }
+      yield event;
+    }
   }
 
   protected prepareRunAgentInput(parameters?: RunAgentParameters): RunAgentInput {
@@ -345,52 +344,45 @@ export abstract class AbstractAgent {
     }
   }
 
-  protected onError(input: RunAgentInput, error: Error, subscribers: AgentSubscriber[]) {
-    return from(
-      runSubscribersWithMutation(
-        subscribers,
-        this.messages,
-        this.state,
-        (subscriber, messages, state) =>
-          subscriber.onRunFailed?.({ error, messages, state, agent: this, input }),
-      ),
-    ).pipe(
-      map((onRunFailedMutation) => {
-        const mutation = onRunFailedMutation as AgentStateMutation;
-        if (mutation.messages !== undefined || mutation.state !== undefined) {
-          if (mutation.messages !== undefined) {
-            this.messages = mutation.messages;
-            subscribers.forEach((subscriber) => {
-              subscriber.onMessagesChanged?.({
-                messages: this.messages,
-                state: this.state,
-                agent: this,
-                input,
-              });
-            });
-          }
-          if (mutation.state !== undefined) {
-            this.state = mutation.state;
-            subscribers.forEach((subscriber) => {
-              subscriber.onStateChanged?.({
-                state: this.state,
-                messages: this.messages,
-                agent: this,
-                input,
-              });
-            });
-          }
-        }
-
-        if (mutation.stopPropagation !== true) {
-          console.error("Agent execution failed:", error);
-          throw error;
-        }
-
-        // Return an empty mutation instead of null to prevent EmptyError
-        return {} as AgentStateMutation;
-      }),
+  protected async onError(input: RunAgentInput, error: Error, subscribers: AgentSubscriber[]) {
+    const onRunFailedMutation = await runSubscribersWithMutation(
+      subscribers,
+      this.messages,
+      this.state,
+      (subscriber, messages, state) =>
+        subscriber.onRunFailed?.({ error, messages, state, agent: this, input }),
     );
+
+    const mutation = onRunFailedMutation as AgentStateMutation;
+    if (mutation.messages !== undefined || mutation.state !== undefined) {
+      if (mutation.messages !== undefined) {
+        this.messages = mutation.messages;
+        subscribers.forEach((subscriber) => {
+          subscriber.onMessagesChanged?.({
+            messages: this.messages,
+            state: this.state,
+            agent: this,
+            input,
+          });
+        });
+      }
+      if (mutation.state !== undefined) {
+        this.state = mutation.state;
+        subscribers.forEach((subscriber) => {
+          subscriber.onStateChanged?.({
+            state: this.state,
+            messages: this.messages,
+            agent: this,
+            input,
+          });
+        });
+      }
+    }
+
+    if (mutation.stopPropagation !== true) {
+      console.error("Agent execution failed:", error);
+      throw error;
+    }
   }
 
   protected async onFinalize(input: RunAgentInput, subscribers: AgentSubscriber[]) {
@@ -566,14 +558,14 @@ export abstract class AbstractAgent {
     })();
   }
 
-  public legacy_to_be_removed_runAgentBridged(
+  public async *legacy_to_be_removed_runAgentBridged(
     config?: RunAgentParameters,
-  ): Observable<LegacyRuntimeProtocolEvent> {
+  ): AsyncIterable<LegacyRuntimeProtocolEvent> {
     this.agentId = this.agentId ?? uuidv4();
     const input = this.prepareRunAgentInput(config);
 
     // Build middleware chain for legacy bridge
-    const runObservable = (() => {
+    const source = (() => {
       if (this.middlewares.length === 0) {
         return this.run(input);
       }
@@ -589,20 +581,26 @@ export abstract class AbstractAgent {
       return chainedAgent.run(input);
     })();
 
-    return runObservable.pipe(
-      transformChunks(this.debug),
-      verifyEvents(this.debug),
-      convertToLegacyEvents(this.threadId, input.runId, this.agentId),
-      (events$: Observable<LegacyRuntimeProtocolEvent>) => {
-        return events$.pipe(
-          map((event) => {
-            if (this.debug) {
-              console.debug("[LEGACY]:", JSON.stringify(event));
-            }
-            return event;
-          }),
-        );
-      },
-    );
+    const chunked = transformChunks(this.debug)(source);
+    const verified = verifyEvents(this.debug)(chunked);
+    const legacyEvents = convertToLegacyEvents(this.threadId, input.runId, this.agentId)(verified);
+
+    for await (const event of legacyEvents) {
+      if (this.debug) {
+        console.debug("[LEGACY]:", JSON.stringify(event));
+      }
+      yield event;
+    }
+  }
+}
+
+/** Helper: iterate an async iterable until the abort signal fires */
+async function* takeUntilAborted<T>(
+  source: AsyncIterable<T>,
+  signal: AbortSignal,
+): AsyncIterable<T> {
+  for await (const item of source) {
+    if (signal.aborted) break;
+    yield item;
   }
 }

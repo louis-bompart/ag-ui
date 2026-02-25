@@ -28,8 +28,7 @@
   "dependencies": {
     "@langchain/core": "^0.3.80",
     "@langchain/langgraph-sdk": "^0.1.2",
-    "partial-json": "^0.1.7",
-    "rxjs": "7.8.1"
+    "partial-json": "^0.1.7"
   },
   "peerDependencies": {
     "@ag-ui/core": ">=0.0.42",

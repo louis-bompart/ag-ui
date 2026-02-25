@@ -1,7 +1,7 @@
 import { AbstractAgent } from "../agent";
 import { HttpAgent } from "../full-http";
 import { BaseEvent, Message, RunAgentInput } from "@ag-ui/core";
-import { EMPTY, Observable } from "rxjs";
+import { emptyAsync } from "@/async-utils";
 
 class CloneableTestAgent extends AbstractAgent {
   constructor() {
@@ -21,8 +21,8 @@ class CloneableTestAgent extends AbstractAgent {
     });
   }
 
-  protected run(_: RunAgentInput): Observable<BaseEvent> {
-    return EMPTY as Observable<BaseEvent>;
+  protected run(_: RunAgentInput): AsyncIterable<BaseEvent> {
+    return emptyAsync<BaseEvent>();
   }
 }
 

@@ -1,7 +1,5 @@
 import { describe, expect, it, vi } from "vitest";
-import { Subject } from "rxjs";
-import { toArray } from "rxjs/operators";
-import { firstValueFrom } from "rxjs";
+import { AsyncChannel, collectAsync } from "@/async-utils";
 import {
   BaseEvent,
   EventType,
@@ -27,7 +25,7 @@ const createAgent = (messages: Message[] = []) =>
 
 describe("defaultApplyEvents with reasoning events", () => {
   it("should handle full reasoning lifecycle", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -38,31 +36,30 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_START,
       messageId: "phase1",
     } as ReasoningStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Thinking...",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
-    events$.next({ type: EventType.REASONING_END } as ReasoningEndEvent);
+    channel.push({ type: EventType.REASONING_END } as ReasoningEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -77,7 +74,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should handle multiple reasoning content events", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -88,36 +85,35 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Let me ",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "think about ",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "this.",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -131,7 +127,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should handle multiple reasoning messages", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -142,43 +138,42 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // First reasoning message
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "First thought",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
     // Second reasoning message
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r2",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r2",
       delta: "Second thought",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r2",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -192,7 +187,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should not create duplicate message when REASONING_MESSAGE_START uses existing messageId", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -203,43 +198,42 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // First REASONING_MESSAGE_START creates the message
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "First part",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
     // Second REASONING_MESSAGE_START with same ID should not create duplicate
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: " Second part",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -253,7 +247,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should trigger onNewMessage callback after REASONING_MESSAGE_END", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -269,26 +263,25 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Thinking...",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -305,7 +298,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should throw error for REASONING_MESSAGE_CHUNK (must be transformed)", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -316,25 +309,24 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_CHUNK,
       messageId: "r1",
       delta: "test",
     });
 
-    events$.complete();
+    channel.close();
 
-    await expect(stateUpdatesPromise).rejects.toThrow(
+    await expect(collectAsync(result$)).rejects.toThrow(
       "REASONING_MESSAGE_CHUNK must be transformed before being applied",
     );
   });
 
   it("should handle REASONING_ENCRYPTED_VALUE for tool-call subtype", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -350,19 +342,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "tool-call",
       entityId: "tool-call-123",
       encryptedValue: "encrypted-value-data",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -380,7 +371,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should handle REASONING_ENCRYPTED_VALUE for message subtype", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -396,19 +387,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "msg-123",
       encryptedValue: "encrypted-value-data",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -424,7 +414,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should handle REASONING_ENCRYPTED_VALUE for reasoning message with message subtype", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -440,19 +430,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "r1",
       encryptedValue: "encrypted-value-data",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -468,7 +457,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should provide correct reasoningMessageBuffer in callbacks", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -486,36 +475,35 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "First",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Second",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Third",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -524,7 +512,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should allow subscribers to stop propagation", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -541,21 +529,20 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -567,7 +554,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should pass-through REASONING_START and REASONING_END without creating messages", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -585,18 +572,17 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_START,
       messageId: "phase1",
     } as ReasoningStartEvent);
-    events$.next({ type: EventType.REASONING_END } as ReasoningEndEvent);
+    channel.push({ type: EventType.REASONING_END } as ReasoningEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -612,7 +598,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should set encryptedValue on tool call when REASONING_ENCRYPTED_VALUE is emitted", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -636,19 +622,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "tool-call",
       entityId: "tc-1",
       encryptedValue: "encrypted-tool-call-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -661,7 +646,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should set encryptedValue on message when REASONING_ENCRYPTED_VALUE is emitted", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -678,19 +663,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "msg-1",
       encryptedValue: "encrypted-message-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -701,7 +685,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should set encryptedValue on reasoning message when REASONING_ENCRYPTED_VALUE is emitted", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -712,36 +696,35 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // First create a reasoning message
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Thinking...",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
     // Then emit encrypted value for it (reasoning messages use "message" subtype)
-    events$.next({
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "r1",
       encryptedValue: "encrypted-reasoning-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -753,7 +736,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should not set encryptedValue when stopPropagation is true", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -776,19 +759,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "msg-1",
       encryptedValue: "encrypted-message-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -800,7 +782,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   // Edge case tests
 
   it("should warn and continue when REASONING_MESSAGE_CONTENT has non-existent messageId", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -813,18 +795,17 @@ describe("defaultApplyEvents with reasoning events", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "non-existent",
       delta: "test",
     } as ReasoningMessageContentEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -841,7 +822,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should warn and continue when REASONING_MESSAGE_END has non-existent messageId", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -854,17 +835,16 @@ describe("defaultApplyEvents with reasoning events", () => {
     const consoleWarnSpy = vi.spyOn(console, "warn").mockImplementation(() => {});
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "non-existent",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -881,7 +861,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should not emit state update when REASONING_ENCRYPTED_VALUE has non-existent entityId for tool-call", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -905,19 +885,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "tool-call",
       entityId: "non-existent-tc",
       encryptedValue: "encrypted-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -927,7 +906,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should not emit state update when REASONING_ENCRYPTED_VALUE has non-existent entityId for message", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -944,19 +923,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "non-existent-msg",
       encryptedValue: "encrypted-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 
@@ -966,7 +944,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should allow stopPropagation for REASONING_MESSAGE_CONTENT", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -983,26 +961,25 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "This should not be added",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -1014,7 +991,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should allow stopPropagation for REASONING_MESSAGE_END (prevents onNewMessage)", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -1033,26 +1010,25 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Thinking...",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -1062,7 +1038,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should provide correct reasoningMessageBuffer in REASONING_MESSAGE_END callback", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -1080,31 +1056,30 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, [subscriber]);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, [subscriber]);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "First",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Second",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     await stateUpdatesPromise;
 
@@ -1113,7 +1088,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should handle whitespace-only delta correctly", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -1124,36 +1099,35 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Hello",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "   ", // whitespace-only delta should be allowed
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "World",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -1163,7 +1137,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should not find tool call in non-assistant message for REASONING_ENCRYPTED_VALUE", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -1192,20 +1166,19 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
     // Try to set encryptedValue on a tool call that exists
-    events$.next({
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "tool-call",
       entityId: "tc-1",
       encryptedValue: "encrypted-value",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -1220,7 +1193,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should handle interleaved reasoning and text messages", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [],
       state: {},
@@ -1231,59 +1204,58 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
 
     // Start reasoning
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r1",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r1",
       delta: "Thinking...",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r1",
     } as ReasoningMessageEndEvent);
 
     // Start text message
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_START,
       messageId: "t1",
       role: "assistant",
     });
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_CONTENT,
       messageId: "t1",
       delta: "Here is my response.",
     });
-    events$.next({
+    channel.push({
       type: EventType.TEXT_MESSAGE_END,
       messageId: "t1",
     });
 
     // Another reasoning
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_START,
       messageId: "r2",
     } as ReasoningMessageStartEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_CONTENT,
       messageId: "r2",
       delta: "More thinking...",
     } as ReasoningMessageContentEvent);
-    events$.next({
+    channel.push({
       type: EventType.REASONING_MESSAGE_END,
       messageId: "r2",
     } as ReasoningMessageEndEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
     const finalUpdate = stateUpdates[stateUpdates.length - 1];
@@ -1302,7 +1274,7 @@ describe("defaultApplyEvents with reasoning events", () => {
   });
 
   it("should not set encryptedValue on activity messages", async () => {
-    const events$ = new Subject<BaseEvent>();
+    const channel = new AsyncChannel<BaseEvent>();
     const initialState: RunAgentInput = {
       messages: [
         {
@@ -1320,19 +1292,18 @@ describe("defaultApplyEvents with reasoning events", () => {
     };
 
     const agent = createAgent(initialState.messages);
-    const result$ = defaultApplyEvents(initialState, events$, agent, []);
-    const stateUpdatesPromise = firstValueFrom(result$.pipe(toArray()));
+    const result$ = defaultApplyEvents(initialState, channel, agent, []);
+    const stateUpdatesPromise = collectAsync(result$);
 
-    events$.next({ type: EventType.RUN_STARTED } as RunStartedEvent);
-    events$.next({
+    channel.push({ type: EventType.RUN_STARTED } as RunStartedEvent);
+    channel.push({
       type: EventType.REASONING_ENCRYPTED_VALUE,
       subtype: "message",
       entityId: "activity-1",
       encryptedValue: "should-not-be-set",
     } as ReasoningEncryptedValueEvent);
 
-    await new Promise((resolve) => setTimeout(resolve, 10));
-    events$.complete();
+    channel.close();
 
     const stateUpdates = await stateUpdatesPromise;
 

@@ -110,9 +110,6 @@ export const agentsIntegrations = {
   langgraph: async () => ({
     ...mapAgents(
       (graphId) => {
-        if (graphId === 'agentic_chat') {
-          return new CpkLangGraphAgent({ deploymentUrl: envVars.langgraphPythonUrl, graphId })
-        }
         return new LangGraphAgent({ deploymentUrl: envVars.langgraphPythonUrl, graphId })
       },
       {
@@ -151,9 +148,6 @@ export const agentsIntegrations = {
   "langgraph-typescript": async () =>
     mapAgents(
       (graphId) => {
-        if (graphId === 'agentic_chat') {
-          return new CpkLangGraphAgent({ deploymentUrl: envVars.langgraphTypescriptUrl, graphId })
-        }
         return new LangGraphAgent({ deploymentUrl: envVars.langgraphTypescriptUrl, graphId })
       },
       {

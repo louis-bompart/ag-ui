@@ -13,36 +13,31 @@ import {
   RunFinishedEvent,
   RunStartedEvent,
 } from "@ag-ui/core";
-import { Observable } from "rxjs";
 
 /**
  * Example agent that emits a simple conversation flow.
  */
 class ExampleAgent extends AbstractAgent {
-  run(input: RunAgentInput): Observable<BaseEvent> {
-    return new Observable<BaseEvent>((subscriber) => {
-      subscriber.next({
-        type: EventType.RUN_STARTED,
-        threadId: input.threadId,
-        runId: input.runId,
-      } as RunStartedEvent);
+  async *run(input: RunAgentInput): AsyncIterable<BaseEvent> {
+    yield {
+      type: EventType.RUN_STARTED,
+      threadId: input.threadId,
+      runId: input.runId,
+    } as RunStartedEvent;
 
-      subscriber.next({
-        type: EventType.TEXT_MESSAGE_CHUNK,
-        messageId: "message-1",
-        role: "assistant",
-        delta: "Hello! Let me calculate that for you.",
-      } as TextMessageChunkEvent);
+    yield {
+      type: EventType.TEXT_MESSAGE_CHUNK,
+      messageId: "message-1",
+      role: "assistant",
+      delta: "Hello! Let me calculate that for you.",
+    } as TextMessageChunkEvent;
 
-      subscriber.next({
-        type: EventType.RUN_FINISHED,
-        threadId: input.threadId,
-        runId: input.runId,
-        result: { answer: 42 },
-      } as RunFinishedEvent);
-
-      subscriber.complete();
-    });
+    yield {
+      type: EventType.RUN_FINISHED,
+      threadId: input.threadId,
+      runId: input.runId,
+      result: { answer: 42 },
+    } as RunFinishedEvent;
   }
 }
 
@@ -50,36 +45,30 @@ class ExampleAgent extends AbstractAgent {
  * Example middleware that logs events as they pass through.
  */
 class LoggingMiddleware extends Middleware {
-  run(input: RunAgentInput, next: AbstractAgent): Observable<BaseEvent> {
+  async *run(input: RunAgentInput, next: AbstractAgent): AsyncIterable<BaseEvent> {
     console.log("Middleware input:", input);
 
-    return next.run(input);
+    yield* next.run(input);
   }
 }
 
 /**
  * Example function-based middleware that modifies the result.
  */
-const resultEnhancer: MiddlewareFunction = (input, next) => {
-  return new Observable<BaseEvent>((subscriber) => {
-    next.run(input).subscribe({
-      next: (event) => {
-        if (event.type === EventType.RUN_FINISHED) {
-          subscriber.next({
-            ...event,
-            result: {
-              ...(event as RunFinishedEvent).result,
-              enhanced: true,
-            },
-          });
-        } else {
-          subscriber.next(event);
-        }
-      },
-      error: (error) => subscriber.error(error),
-      complete: () => subscriber.complete(),
-    });
-  });
+const resultEnhancer: MiddlewareFunction = async function* (input, next) {
+  for await (const event of next.run(input)) {
+    if (event.type === EventType.RUN_FINISHED) {
+      yield {
+        ...event,
+        result: {
+          ...(event as RunFinishedEvent).result,
+          enhanced: true,
+        },
+      };
+    } else {
+      yield event;
+    }
+  }
 };
 
 const input: RunAgentInput = {

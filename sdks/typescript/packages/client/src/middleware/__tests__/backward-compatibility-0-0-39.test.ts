@@ -1,6 +1,6 @@
 import { AbstractAgent } from "@/agent";
 import { BaseEvent, EventType, Message, RunAgentInput } from "@ag-ui/core";
-import { Observable, of } from "rxjs";
+import { ofAsync } from "@/async-utils";
 
 class LegacyAgent extends AbstractAgent {
   public receivedInput?: RunAgentInput;
@@ -13,9 +13,9 @@ class LegacyAgent extends AbstractAgent {
     return "0.0.39";
   }
 
-  override run(input: RunAgentInput): Observable<BaseEvent> {
+  override run(input: RunAgentInput): AsyncIterable<BaseEvent> {
     this.receivedInput = input;
-    return of({
+    return ofAsync({
       type: EventType.RUN_STARTED,
       threadId: input.threadId,
       runId: input.runId,

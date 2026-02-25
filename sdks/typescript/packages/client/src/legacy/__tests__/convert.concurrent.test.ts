@@ -1,6 +1,5 @@
 import { convertToLegacyEvents } from "../convert";
-import { of } from "rxjs";
-import { toArray } from "rxjs/operators";
+import { ofAsync, collectAsync } from "@/async-utils";
 import {
   BaseEvent,
   EventType,
@@ -66,13 +65,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as TextMessageEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(6);
 
@@ -148,13 +145,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(6);
 
@@ -257,13 +252,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as TextMessageEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(9);
 
@@ -365,13 +358,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(9);
 
@@ -472,13 +463,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as ToolCallEndEvent);
     }
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     // Should have: numMessages starts + numToolCalls starts + numMessages content + numToolCalls args + numMessages ends + numToolCalls ends
     const expectedLength = numMessages * 3 + numToolCalls * 3;
@@ -594,13 +583,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(10);
 
@@ -707,13 +694,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     // Should have: PredictState + 2 starts + 2 args + 2 state updates + 2 ends = 9 events
     expect(events).toHaveLength(9);
@@ -796,13 +781,11 @@ describe("convertToLegacyEvents - Concurrent Operations", () => {
       } as StepFinishedEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       defaultParams.threadId,
       defaultParams.runId,
       defaultParams.agentName,
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(8);
 

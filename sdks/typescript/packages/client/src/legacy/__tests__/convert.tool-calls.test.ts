@@ -1,6 +1,5 @@
 import { convertToLegacyEvents } from "../convert";
-import { of } from "rxjs";
-import { toArray } from "rxjs/operators";
+import { ofAsync, collectAsync } from "@/async-utils";
 import {
   BaseEvent,
   EventType,
@@ -38,13 +37,11 @@ describe("convertToLegacyEvents - Tool Call Sequences", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(3);
     expect(events[0].type).toBe("ActionExecutionStart");
@@ -85,13 +82,11 @@ describe("convertToLegacyEvents - Tool Call Sequences", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(5);
     expect(events[0].type).toBe("ActionExecutionStart");
@@ -147,13 +142,11 @@ describe("convertToLegacyEvents - Tool Call Sequences", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(6);
 
@@ -183,13 +176,11 @@ describe("convertToLegacyEvents - Tool Call Sequences", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(2);
     expect(events[0].type).toBe("ActionExecutionStart");
@@ -217,13 +208,11 @@ describe("convertToLegacyEvents - Tool Call Sequences", () => {
       } as ToolCallEndEvent,
     ];
 
-    const events = (await convertToLegacyEvents(
+    const events = await collectAsync(convertToLegacyEvents(
       "test-thread",
       "test-run",
       "test-agent",
-    )(of(...mockEvents))
-      .pipe(toArray())
-      .toPromise()) as LegacyRuntimeProtocolEvent[];
+    )(ofAsync(...mockEvents))) as LegacyRuntimeProtocolEvent[];
 
     expect(events).toHaveLength(3);
     expect(events[0].type).toBe("ActionExecutionStart");
